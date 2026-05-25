@@ -129,19 +129,26 @@ async function getSolUsd() {
     return solUsdCache.price;
 }
 
-// Live market cap of the traded pump.fun token. The externa program is dormant
-// and has no market of its own, so the header reads the pair here regardless of
+// The brood is every hand that buys in (§Colonisation). DexScreener counts each
+// buy on the pair over the trailing day — the larvae drawn in and still
+// attaching — which is the living measure of the brood gathering.
+function broodOf(pair) {
+    return Number(pair?.txns?.h24?.buys ?? 0);
+}
+
+// Live market cap + brood of the traded pump.fun token. The externa program is
+// dormant and has no market of its own, so we read the pair here regardless of
 // phase.
-async function getPumpMcap() {
-    if (!PUMP_MINT) return 0;
+async function getPumpStats() {
+    if (!PUMP_MINT) return {mcap: 0, brood: 0};
     try {
         const res = await fetch(DEXSCREENER + PUMP_MINT);
         const data = await res.json();
         const pairs = data?.pairs ?? [];
         const pair = pairs.find((x) => (x.dexId ?? "").toLowerCase().includes("pump")) ?? pairs[0];
-        return Number(pair?.marketCap ?? pair?.fdv ?? 0);
+        return {mcap: Number(pair?.marketCap ?? pair?.fdv ?? 0), brood: broodOf(pair)};
     } catch (e) {
-        return 0;
+        return {mcap: 0, brood: 0};
     }
 }
 
@@ -151,6 +158,20 @@ function setStats(items) {
     document.getElementById("status-text").innerHTML = items
         .map((s) => `<span class="stat"><span class="k">${s.k}</span><span class="v">${s.v}</span></span>`)
         .join('<span class="sep">·</span>');
+}
+
+// The live sign of the brood inside the "Join the brood" box: how many have been
+// drawn in over the trailing day. A flow, not a headcount — stated plainly, in
+// the record's voice. Absent or quiet data shows nothing rather than a fake.
+function setBrood(n) {
+    const el = document.getElementById("feed-brood");
+    if (!el) return;
+    if (Number.isFinite(n) && n > 0) {
+        el.textContent = `the brood gathers · ${n.toLocaleString("en-US")} drawn in over the last day`;
+        el.hidden = false;
+    } else {
+        el.hidden = true;
+    }
 }
 
 async function refreshVitals() {
@@ -180,10 +201,11 @@ async function refreshVitals() {
             document.getElementById("contract-addr").textContent = EXTERNA_MINT;
 
             const stats = [{k: "phase", v: p.dead ? "terminated" : "externa"}];
-            const mcap = await getPumpMcap();
+            const {mcap, brood} = await getPumpStats();
             if (mcap) stats.push({k: "market cap", v: fmtUsd(mcap)});
             if (lifetime > 0) stats.push({k: "age", v: fmtDurationShort(lifetime)});
             setStats(stats);
+            setBrood(brood);
 
             document.getElementById("v-reserve").textContent = fmtSol(reserve) + " SOL";
             document.getElementById("v-supply").textContent = fmtSupply(supply) + " $PARASITE";
@@ -221,6 +243,7 @@ async function refreshVitals() {
             } else {
                 setStats([{k: "phase", v: "infected"}]);
             }
+            setBrood(broodOf(pair));
             document.getElementById("v-supply").textContent = "—";
             document.getElementById("v-vault").textContent = "creator fees (off-chart)";
             document.getElementById("v-lifetime").textContent = "the externa has erupted";
@@ -235,10 +258,12 @@ async function refreshVitals() {
         // ── Unborn ──
         stateEl.textContent = "awaiting launch";
         setStats([{k: "status", v: "awaiting launch"}]);
+        setBrood(0);
     } catch (e) {
         console.error("vitals fetch failed", e);
         stateEl.textContent = "telemetry error";
         document.getElementById("status-text").textContent = "telemetry error";
+        setBrood(0);
     }
 }
 
