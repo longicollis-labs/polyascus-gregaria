@@ -9,6 +9,7 @@ import {readFileSync, writeFileSync, existsSync} from "node:fs";
 import {TwitterApi} from "twitter-api-v2";
 import {replyToMention} from "./llm.js";
 import {readStage} from "./infection.js";
+import {loadInnerState, renderInner} from "./inner.js";
 
 const DRY = process.env.DRY_RUN === "1";
 const CAP = Number(process.env.REPLY_CAP ?? "5"); // max replies posted per run
@@ -66,6 +67,7 @@ async function main(): Promise<void> {
     const c = client();
     const log = loadLog();
     const stage = (await readStage())?.name ?? "rooting";
+    const inner = renderInner(loadInnerState());
 
     const res = await c.v2.userMentionTimeline(USER_ID, {
         max_results: 25,
@@ -116,7 +118,7 @@ async function main(): Promise<void> {
         }
         let reply = "";
         try {
-            reply = await replyToMention({mention: text, author: uname, stage});
+            reply = await replyToMention({mention: text, author: uname, stage, inner});
         } catch (e) {
             console.error("gen failed", t.id, (e as Error)?.message || e);
             continue;
@@ -133,7 +135,7 @@ async function main(): Promise<void> {
         } else {
             try {
                 const r = await c.v2.reply(reply, t.id);
-                log.answered[t.id] = {reply, repliedId: r.data.id, ts: now};
+                log.answered[t.id] = {reply, author: uname, said: text.slice(0, 200), repliedId: r.data.id, ts: now};
                 saveLog(log);
                 console.log(`replied @${uname}: ${reply}`);
             } catch (e) {

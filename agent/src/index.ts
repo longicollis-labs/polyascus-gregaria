@@ -4,6 +4,8 @@ import {decide, type AgentInput} from "./llm.js";
 import {readStage, STAGE_NAMES} from "./infection.js";
 import {readVitals} from "./state.js";
 import {postTweet} from "./x.js";
+import {readFileSync, existsSync} from "node:fs";
+import {loadInnerState, saveInnerState, evolveInnerState, renderInner} from "./inner.js";
 
 // Most recent market cap recorded in the log, for the brood-motion signal.
 function lastMcap(log: LogEntry[]): number | null {
@@ -21,6 +23,22 @@ function describeBrood(cur: number | null, prev: number | null): AgentInput["bro
     if (cur >= prev * 1.05) return "swelling";
     if (cur <= prev * 0.95) return "thinning";
     return "steady";
+}
+
+// Her recent replies + the dry-world voices she answered, fed into self-evolution.
+function recentRepliesAndVoices(): {replies: string[]; voices: {handle: string; said: string}[]} {
+    const path = new URL("../../replies-log.json", import.meta.url).pathname;
+    if (!existsSync(path)) return {replies: [], voices: []};
+    try {
+        const log = JSON.parse(readFileSync(path, "utf8"));
+        const entries = (Object.values(log.answered ?? {}) as any[]).filter((e) => e && e.reply).slice(-6);
+        return {
+            replies: entries.map((e) => e.reply),
+            voices: entries.filter((e) => e.author && e.said).map((e) => ({handle: e.author, said: e.said})),
+        };
+    } catch {
+        return {replies: [], voices: []};
+    }
 }
 
 async function main(): Promise<void> {
@@ -59,7 +77,8 @@ async function main(): Promise<void> {
         vitals.phase + ")",
     );
 
-    const decision = await decide(input);
+    const inner = loadInnerState();
+    const decision = await decide(input, renderInner(inner));
     console.log("decision:", decision);
 
     // She is a narrator; she does not act on-chain. Claims/feeds are operator-run.
@@ -98,6 +117,27 @@ async function main(): Promise<void> {
             is_dead: vitals.is_dead,
         },
     });
+
+    // Self-evolution: nudge her inner state one bounded step from this cycle.
+    if (!DRY_RUN) {
+        try {
+            const {replies, voices} = recentRepliesAndVoices();
+            const posts = input.recent_posts.map((p) => p.text);
+            if (decision.post_text) posts.push(decision.post_text);
+            const evolved = await evolveInnerState({
+                current: inner,
+                recentPosts: posts.slice(-6),
+                recentReplies: replies,
+                recentVoices: voices,
+                stage: input.stage,
+                justAdvanced: input.just_advanced,
+            });
+            saveInnerState(evolved);
+            console.log("inner state evolved");
+        } catch (e) {
+            console.error("evolve failed:", (e as Error)?.message || e);
+        }
+    }
     console.log("done");
 }
 

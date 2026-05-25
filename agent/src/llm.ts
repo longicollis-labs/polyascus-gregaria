@@ -34,7 +34,7 @@ export type AgentInput = {
     advanced_from: string | null;
 };
 
-export async function decide(input: AgentInput): Promise<Decision> {
+export async function decide(input: AgentInput, inner = ""): Promise<Decision> {
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) throw new Error("ANTHROPIC_API_KEY not set");
 
@@ -51,7 +51,10 @@ export async function decide(input: AgentInput): Promise<Decision> {
             model: anthropic(MODEL),
             schema: DecisionSchema,
             system: systemPrompt,
-            prompt: JSON.stringify(input, null, 2) + nudge,
+            prompt:
+                JSON.stringify(input, null, 2) +
+                (inner ? "\n\n--- your inner state (who you've become; live from it, do not recite it) ---\n" + inner : "") +
+                nudge,
             maxRetries: 2,
         });
         object = res.object;
@@ -68,7 +71,7 @@ const REPLY_TIC =
     /\bbetter (?:at being|than (?:you|i|me|us|her|him)|how to be)\b|\bknows? (?:me|you|us|her|him) better\b|\blearning to be (?:me|you|her|him|us)\b|\bhow to be (?:me|you)\b/i;
 
 // She answers a creature from the dry world — in character, one or two lines.
-export async function replyToMention(input: {mention: string; author: string; stage: string}): Promise<string> {
+export async function replyToMention(input: {mention: string; author: string; stage: string; inner?: string}): Promise<string> {
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) throw new Error("ANTHROPIC_API_KEY not set");
 
@@ -78,7 +81,8 @@ export async function replyToMention(input: {mention: string; author: string; st
         `A creature from the dry world (@${input.author}) leans over the water and says to you:\n\n` +
         `"${input.mention}"\n\n` +
         `You are at the ${input.stage} stage of your colonisation. Answer them — only your own words, ` +
-        `one or two lines, under 200 characters, in character. No hashtags, no @-handles, no surrounding quotation marks.`;
+        `one or two lines, under 200 characters, in character. No hashtags, no @-handles, no surrounding quotation marks.` +
+        (input.inner ? `\n\nYour inner state (who you've become; draw on it, do not recite it):\n${input.inner}` : "");
 
     let reply = "";
     for (let attempt = 0; attempt < 3; attempt++) {
