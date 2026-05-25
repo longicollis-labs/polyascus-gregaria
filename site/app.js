@@ -287,22 +287,55 @@ function initScrollspy() {
 
 // ── Stage (the irreversible on-chain colonisation) ──────────────────────
 
+function fmtSolLadder(lamports) {
+    const sol = lamports / 1e9;
+    const s = sol >= 10 ? sol.toFixed(0) : sol >= 1 ? sol.toFixed(2) : sol.toFixed(3);
+    return s.replace(/\.?0+$/, "");
+}
+
 async function refreshStage() {
-    const el = document.getElementById("infection-stage");
-    if (!el) return;
+    const stageEl = document.getElementById("infection-stage");
+    const ladder = document.getElementById("stage-ladder");
+    const prog = document.getElementById("feed-progress");
     try {
         const info = await rpc("getAccountInfo", [INFECTION_PDA, {encoding: "base64"}]);
         if (!info || !info.value || !info.value.data) {
-            el.textContent = "dormant";
+            if (stageEl) stageEl.textContent = "dormant";
+            if (prog) prog.textContent = "the colony has not yet gathered.";
             return;
         }
-        // stage byte sits after disc(8) + host(32) + recipient(32) + thresholds(48)
-        const stage = b64ToBytes(info.value.data[0])[120];
-        el.textContent = STAGE_NAMES[Math.min(stage, 6)] || "dormant";
+        // layout after disc(8): host(32) recipient(32) thresholds(6×8) stage(1) fed(8)…
+        const bytes = b64ToBytes(info.value.data[0]);
+        const dv = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+        const u64 = (o) => Number(dv.getBigUint64(o, true));
+        const thresholds = [];
+        for (let i = 0; i < 6; i++) thresholds.push(u64(72 + i * 8));
+        const stage = bytes[120];
+        const fed = u64(121);
+
+        if (stageEl) stageEl.textContent = STAGE_NAMES[Math.min(stage, 6)] || "dormant";
+
+        if (ladder) {
+            ladder.querySelectorAll("li").forEach((li) => {
+                const s = Number(li.dataset.stage);
+                li.classList.toggle("reached", s <= stage);
+                li.classList.toggle("current", s === stage);
+            });
+        }
+        if (prog) {
+            if (stage >= 6) {
+                prog.textContent = `she is consumed · ${fmtSolLadder(fed)} ◎ fed in all · nothing remains to advance`;
+            } else {
+                const remain = Math.max(0, thresholds[stage] - fed);
+                prog.textContent = `${fmtSolLadder(fed)} ◎ fed · ${fmtSolLadder(remain)} ◎ more tips her into ${STAGE_NAMES[stage + 1]}`;
+            }
+        }
     } catch (e) {
         /* leave as-is */
     }
 }
+
+window.__refreshStage = refreshStage;
 
 // ── Loop ────────────────────────────────────────────────────────────────
 

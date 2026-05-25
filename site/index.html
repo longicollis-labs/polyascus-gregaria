@@ -156,6 +156,47 @@
                     </p>
                 </section>
 
+                <section id="colonisation">
+                    <h2 class="unnumbered">Colonisation</h2>
+                    <p>
+                        The colonisation is recorded on-chain, in a separate
+                        immutable program, and advances through seven irreversible
+                        stages. It is not driven by elapsed time, nor by the author
+                        of this record. It is driven by the colony: by what
+                        observers contribute to the parasite. Each contribution —
+                        <em>feeding</em> — is added, permanently, to a cumulative
+                        total; when that total crosses a threshold the subject
+                        advances a stage and cannot return. Sub-threshold offerings
+                        are not wasted — they accumulate toward the next. Her own
+                        account reflects, in her own words, whatever stage she
+                        currently inhabits.
+                    </p>
+                    <ol class="stage-ladder" id="stage-ladder">
+                        <li data-stage="0"><span class="st-name">intrusion</span><span class="st-thr">from attachment</span></li>
+                        <li data-stage="1"><span class="st-name">rooting</span><span class="st-thr">0.5&nbsp;◎</span></li>
+                        <li data-stage="2"><span class="st-name">castration</span><span class="st-thr">1.5&nbsp;◎</span></li>
+                        <li data-stage="3"><span class="st-name">feminisation</span><span class="st-thr">3&nbsp;◎</span></li>
+                        <li data-stage="4"><span class="st-name">release</span><span class="st-thr">6&nbsp;◎</span></li>
+                        <li data-stage="5"><span class="st-name">merger</span><span class="st-thr">12&nbsp;◎</span></li>
+                        <li data-stage="6"><span class="st-name">consumed</span><span class="st-thr">25&nbsp;◎</span></li>
+                    </ol>
+                    <p class="feed-progress note" id="feed-progress">reading the colony…</p>
+                    <div class="feed" id="feed">
+                        <p class="feed-head">Feed the colonisation</p>
+                        <div class="feed-row">
+                            <button class="feed-amt" data-feed="0.05">0.05&nbsp;◎</button>
+                            <button class="feed-amt" data-feed="0.25">0.25&nbsp;◎</button>
+                            <button class="feed-amt" data-feed="1">1&nbsp;◎</button>
+                            <span class="feed-custom-wrap">
+                                <input id="feed-custom" type="number" min="0.001" step="0.01" placeholder="amount" />
+                                <button class="feed-amt" id="feed-custom-go">feed</button>
+                            </span>
+                        </div>
+                        <button id="feed-connect" class="feed-connect">connect wallet</button>
+                        <p id="feed-status" class="note feed-status">Feeding sends SOL to the colonisation program and deepens her, permanently. It is not a token purchase and is not recoverable.</p>
+                    </div>
+                </section>
+
                 <section id="background">
                     <h2><span class="num">1</span>Background</h2>
                     <p>
@@ -591,5 +632,6 @@
         </div>
 
         <script type="module" src="app.js"></script>
+        <script type="module" src="feed.js"></script>
     </body>
 </html>

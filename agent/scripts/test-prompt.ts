@@ -21,6 +21,8 @@ const scenarios: Scenario[] = [
             since_last_post_seconds: 3600,
             brood: "swelling",
             stage: "rooting",
+            just_advanced: false,
+            advanced_from: null,
         },
     },
     {
@@ -30,6 +32,8 @@ const scenarios: Scenario[] = [
             since_last_post_seconds: 5400,
             brood: "thinning",
             stage: "feminisation",
+            just_advanced: false,
+            advanced_from: null,
         },
     },
     {
@@ -39,9 +43,25 @@ const scenarios: Scenario[] = [
             since_last_post_seconds: 1800,
             brood: "steady",
             stage: "merger",
+            just_advanced: false,
+            advanced_from: null,
         },
     },
-    {name: "4. still / quiet", input: {recent_posts: [], since_last_post_seconds: null, brood: "still", stage: "intrusion"}},
+    {
+        name: "4. still / quiet",
+        input: {recent_posts: [], since_last_post_seconds: null, brood: "still", stage: "intrusion", just_advanced: false, advanced_from: null},
+    },
+    {
+        name: "5. just crossed castration → feminisation",
+        input: {
+            recent_posts: recent(["Two more of the brood let go in the night.", "I keep the externa clean. It is the only thing I am sure of now."]),
+            since_last_post_seconds: 900,
+            brood: "swelling",
+            stage: "feminisation",
+            just_advanced: true,
+            advanced_from: "castration",
+        },
+    },
 ];
 
 const FORBIDDEN = [

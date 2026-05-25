@@ -1,7 +1,7 @@
 import {DRY_RUN} from "./constants.js";
 import {appendLog, readLog, recentPosts, secondsSince, type LogEntry} from "./log.js";
 import {decide, type AgentInput} from "./llm.js";
-import {readStage} from "./infection.js";
+import {readStage, STAGE_NAMES} from "./infection.js";
 import {readVitals} from "./state.js";
 import {postTweet} from "./x.js";
 
@@ -29,13 +29,35 @@ async function main(): Promise<void> {
     const brood = describeBrood(vitals.market_cap_usd, lastMcap(log));
     const inf = await readStage();
 
+    // Detect a stage advance since her last recorded run → she narrates the crossing.
+    const curStageIdx = inf?.stage ?? null;
+    let lastStageIdx: number | null = null;
+    for (let i = log.length - 1; i >= 0; i--) {
+        const s = log[i]!.stage_index;
+        if (typeof s === "number") {
+            lastStageIdx = s;
+            break;
+        }
+    }
+    const justAdvanced = curStageIdx != null && lastStageIdx != null && curStageIdx > lastStageIdx;
+
     const input: AgentInput = {
         recent_posts: recentPosts(log, 6),
         since_last_post_seconds: secondsSince(log, (e) => !!e.posted_tweet_id),
         brood,
         stage: inf?.name ?? "intrusion",
+        just_advanced: justAdvanced,
+        advanced_from: justAdvanced && lastStageIdx != null ? STAGE_NAMES[lastStageIdx]! : null,
     };
-    console.log("stage:", inf?.name ?? "intrusion", "| brood:", brood, "(phase:", vitals.phase + ")");
+    console.log(
+        "stage:",
+        inf?.name ?? "intrusion",
+        justAdvanced ? `(JUST CROSSED from ${STAGE_NAMES[lastStageIdx!]})` : "",
+        "| brood:",
+        brood,
+        "(phase:",
+        vitals.phase + ")",
+    );
 
     const decision = await decide(input);
     console.log("decision:", decision);
@@ -65,6 +87,7 @@ async function main(): Promise<void> {
         action_kind: "none",
         action_amount_sol: 0,
         action_tx_sig: null,
+        stage_index: curStageIdx,
         vitals_snapshot: {
             phase: vitals.phase,
             reserve_sol: vitals.reserve_sol,

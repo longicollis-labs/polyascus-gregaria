@@ -11,6 +11,8 @@ export type LogEntry = {
     action_kind: "none" | "pulse" | "claim" | "feed";
     action_amount_sol: number;
     action_tx_sig: string | null;
+    // The on-chain colonisation stage at this run (0..=6), for advance detection.
+    stage_index: number | null;
     vitals_snapshot: {
         phase: Phase;
         reserve_sol: number;

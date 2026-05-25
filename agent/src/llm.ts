@@ -28,6 +28,10 @@ export type AgentInput = {
     // How far the colonisation has progressed (on-chain, irreversible):
     // intrusion → rooting → castration → feminisation → release → merger → consumed.
     stage: string;
+    // True when the stage deepened since her last post — narrate the crossing.
+    just_advanced: boolean;
+    // The stage she just left, when just_advanced; otherwise null.
+    advanced_from: string | null;
 };
 
 export async function decide(input: AgentInput): Promise<Decision> {
