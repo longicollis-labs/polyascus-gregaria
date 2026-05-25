@@ -367,6 +367,14 @@ async function refreshStage() {
                 }
             });
         }
+        // Surface the current stage's meaning at the title block, in her
+        // field-record voice — reusing the ladder's own description so the
+        // header gloss and the spine can never drift apart.
+        const cond = document.getElementById("oc-condition");
+        if (cond && ladder) {
+            const desc = ladder.querySelector(`li[data-stage="${Math.min(stage, 6)}"] .st-desc`);
+            if (desc && desc.textContent.trim()) cond.textContent = desc.textContent.trim();
+        }
         if (prog) {
             if (stage >= 6) {
                 prog.textContent = `she is consumed · ${fmtSolLadder(fed)} ◎ fed in all · nothing remains to advance`;

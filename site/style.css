@@ -411,10 +411,25 @@ header.title .subtitle {
 }
 
 .onchain {
-    margin: 0 0 28px;
+    margin: 0 0 9px;
     display: grid;
     gap: 7px;
     max-width: 540px;
+}
+
+/* the live stage's meaning, in her field-record voice — echoes the spine's taupe */
+.oc-condition {
+    margin: 0 0 28px;
+    padding-left: 14px;
+    border-left: 2px solid var(--taupe);
+    max-width: 540px;
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 15px;
+    line-height: 1.45;
+    color: var(--accent);
+    text-indent: 0;
+    hyphens: none;
 }
 
 .oc-row {
