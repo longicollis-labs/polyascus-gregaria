@@ -11,6 +11,10 @@
     --accent: #1a3a8c;
     --accent-strong: #0e2566;
     --accent-soft: #f0f3fa;
+    --taupe: #c5b6a7;
+    --taupe-edge: #b6a48f;
+    --taupe-tint: #f4f1ec;
+    --taupe-ink: #6f5f4b;
     --warn: #8a1f1f;
     --pulse-alive: #2ea043;
     --pulse-dead: #c93434;
@@ -261,13 +265,13 @@ nav.toc a:hover {
 }
 
 nav.toc a.active {
-    color: var(--accent-strong);
-    border-left-color: var(--accent);
-    background: var(--accent-soft);
+    color: var(--taupe-ink);
+    border-left-color: var(--taupe);
+    background: var(--taupe-tint);
 }
 
 nav.toc a.active .n {
-    color: var(--accent);
+    color: var(--taupe-ink);
 }
 
 .toc-divider {
@@ -505,7 +509,7 @@ header.title .subtitle {
 }
 
 .feed {
-    border: 1px solid var(--rule);
+    border: 1px solid var(--taupe-edge);
     background: var(--bg-soft);
     padding: 20px 22px;
     max-width: 540px;
@@ -532,16 +536,17 @@ header.title .subtitle {
     font-family: var(--mono);
     font-size: 13px;
     padding: 7px 13px;
-    border: 1px solid var(--rule);
+    border: 1px solid var(--taupe-edge);
     background: var(--bg);
     color: var(--fg-soft);
     cursor: pointer;
-    transition: border-color 0.15s, color 0.15s;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
 }
 
 .feed-amt:hover {
-    border-color: var(--accent);
-    color: var(--accent);
+    border-color: var(--taupe);
+    background: var(--taupe);
+    color: var(--fg);
 }
 
 .feed-custom-wrap {
@@ -555,7 +560,7 @@ header.title .subtitle {
     font-family: var(--mono);
     font-size: 13px;
     padding: 6px 9px;
-    border: 1px solid var(--rule);
+    border: 1px solid var(--taupe-edge);
     background: var(--bg);
     color: var(--fg);
 }
@@ -565,9 +570,9 @@ header.title .subtitle {
     font-size: 12.5px;
     letter-spacing: 0.02em;
     padding: 9px 18px;
-    border: 1px solid var(--accent);
-    background: var(--accent);
-    color: #fff;
+    border: 1px solid var(--taupe-edge);
+    background: var(--taupe);
+    color: var(--fg);
     cursor: pointer;
     transition: opacity 0.15s;
 }
@@ -581,7 +586,7 @@ header.title .subtitle {
 }
 
 .feed-status[data-kind="ok"] {
-    color: var(--accent);
+    color: var(--taupe-ink);
 }
 
 .feed-status[data-kind="err"] {
