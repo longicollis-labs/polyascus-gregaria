@@ -50,8 +50,12 @@ async function solUsd(): Promise<number | null> {
 export async function readVitals(): Promise<Vitals> {
     const acct = await readParasite();
 
-    // ── Adult: the externa is live. Everything is real. ──
-    if (acct) {
+    // ── Adult: the externa is her body only once it has a brood. A freshly
+    // initialized (empty) externa is not yet alive — fall through to larval. ──
+    if (
+        acct &&
+        (acct.dead || Number(acct.bornAt.toString()) !== 0 || Number(acct.realLamports.toString()) !== 0)
+    ) {
         const real = lamports(acct.realLamports);
         const vault = lamports(acct.hostVaultLamports);
 
