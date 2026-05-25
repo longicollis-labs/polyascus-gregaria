@@ -1,0 +1,22 @@
+# 24/7 trigger for Charybdis — a Render cron that dispatches the agent every
+# 15 minutes, independent of any local machine. GitHub's own schedule is
+# unreliable, so we drive it externally.
+#
+# Deploy: Render dashboard → New → Blueprint → connect this repo → set GH_TOKEN
+#   (a GitHub PAT with "Actions: Read and write" on longicollis-labs/polyascus-gregaria).
+#
+# Free alternative (no Render): cron-job.org POSTing the same dispatch endpoint —
+#   POST https://api.github.com/repos/longicollis-labs/polyascus-gregaria/actions/workflows/charybdis.yml/dispatches
+#   headers: Authorization: Bearer <PAT>, Accept: application/vnd.github+json, X-GitHub-Api-Version: 2022-11-28
+#   body: {"ref":"main"}  ·  schedule: every 15 min
+services:
+  - type: cron
+    name: charybdis-tick
+    runtime: node
+    plan: starter
+    schedule: "*/15 * * * *"
+    buildCommand: "true"
+    startCommand: "node agent/trigger.mjs"
+    envVars:
+      - key: GH_TOKEN
+        sync: false

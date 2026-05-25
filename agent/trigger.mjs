@@ -1,6 +1,7 @@
 // Triggers the charybdis workflow via the GitHub Actions dispatch API.
-// Run by an external scheduler every 4h because GitHub's own `schedule:`
-// trigger is unreliable and frequently skips. Needs GH_TOKEN in the env.
+// Run by an external scheduler every ~15 min because GitHub's own `schedule:`
+// trigger is unreliable and frequently skips. Needs GH_TOKEN in the env
+// (a PAT with Actions: Read and write on the repo).
 const res = await fetch(
     "https://api.github.com/repos/longicollis-labs/polyascus-gregaria/actions/workflows/charybdis.yml/dispatches",
     {
