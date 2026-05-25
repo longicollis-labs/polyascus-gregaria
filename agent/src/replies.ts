@@ -1,10 +1,10 @@
 // Answers the dry world. Reads recent @CrabCharybdis mentions, generates a crab
 // reply via her persona, and posts it — at most once per conversation thread and
-// once per user per 24h. Skips retweets, self/operator, and anything already
-// answered. DRY_RUN prints proposed replies and persists nothing.
+// once per user per 24h. Skips retweets, self/operator, generic crypto spam
+// (collab / DM / promo), and anything already answered. DRY_RUN posts nothing.
 //
 // Env: TWITTER_* creds, ANTHROPIC_API_KEY, SOLANA_RPC_URL; optional REPLY_CAP,
-// X_USER_ID, DRY_RUN.
+// MIN_FOLLOWERS, X_USER_ID, DRY_RUN.
 import {readFileSync, writeFileSync, existsSync} from "node:fs";
 import {TwitterApi} from "twitter-api-v2";
 import {replyToMention} from "./llm.js";
@@ -12,13 +12,19 @@ import {readStage} from "./infection.js";
 
 const DRY = process.env.DRY_RUN === "1";
 const CAP = Number(process.env.REPLY_CAP ?? "5"); // max replies posted per run
+const MIN_FOLLOWERS = Number(process.env.MIN_FOLLOWERS ?? "0"); // 0 = off
 const USER_ID = process.env.X_USER_ID ?? "2057191960411070464"; // @CrabCharybdis
 const SKIP_AUTHORS = new Set(["crabcharybdis", "longicollislabs"]);
 const DAY_MS = 24 * 60 * 60 * 1000;
 const LOG_PATH = process.env.REPLIES_LOG_PATH ?? new URL("../../replies-log.json", import.meta.url).pathname;
+
 // a reply must never leak mechanics / break the fiction
 const FORBIDDEN =
     /\b(token|coin|crypto|memecoin|market\s?cap|mcap|pump\.?fun|wallet|mainnet|devnet|airdrop|presale|solana|as an ai|language model|chatgpt|anthropic)\b|\$sol/i;
+
+// generic crypto-engagement spam she shouldn't dignify with a reply
+const SPAM_RE =
+    /(?:\b(collab(?:orate|oration)?|let\W?s (?:talk|connect|chat|build|grow|work|partner|collab)|grow (?:with me|together)|(?:build|work) together|partnership|reach out|contact (?:me|us)|hit me up|get in touch|inbox me|message me|i can help|let me help|offering (?:free )?help|free help|promote (?:your|you)|shill|feature your|list your|join (?:my|our|the)|f4f|follow4follow|follow (?:me|back)|would love to (?:be part|collaborate|connect|partner|work|help|join))\b|\bd\.?ms?\b|t\.me\/|discord\.gg|\btelegram\b)/i;
 
 function client(): TwitterApi {
     const k = process.env.TWITTER_API_KEY,
@@ -30,9 +36,9 @@ function client(): TwitterApi {
 }
 
 type Log = {
-    answered: Record<string, unknown>; // mention id -> record (replied or skipped)
-    threads: Record<string, string>; // conversation id -> iso ts of our reply (once per thread)
-    users: Record<string, string>; // author id -> iso ts of our last reply (once per user/day)
+    answered: Record<string, unknown>;
+    threads: Record<string, string>; // conversation id -> iso ts (once per thread)
+    users: Record<string, string>; // author id -> iso ts (once per user/day)
 };
 function loadLog(): Log {
     if (existsSync(LOG_PATH)) {
@@ -50,7 +56,7 @@ function saveLog(l: Log): void {
     if (ans.length > 400) for (const id of ans.slice(0, ans.length - 400)) delete l.answered[id];
     const thr = Object.keys(l.threads);
     if (thr.length > 1000) for (const id of thr.slice(0, thr.length - 1000)) delete l.threads[id];
-    const cutoff = Date.now() - 2 * DAY_MS; // users only matter for 24h; keep 48h
+    const cutoff = Date.now() - 2 * DAY_MS;
     for (const [u, ts] of Object.entries(l.users)) if (new Date(ts).getTime() < cutoff) delete l.users[u];
     writeFileSync(LOG_PATH, JSON.stringify(l, null, 2) + "\n");
 }
@@ -65,32 +71,43 @@ async function main(): Promise<void> {
         max_results: 25,
         "tweet.fields": ["created_at", "author_id", "referenced_tweets", "conversation_id"],
         expansions: ["author_id"],
-        "user.fields": ["username"],
+        "user.fields": ["username", "public_metrics"],
     });
-    const users = new Map<string, string>((res.includes?.users ?? []).map((u: any) => [u.id, u.username]));
+    const info = new Map<string, {username: string; followers: number}>(
+        (res.includes?.users ?? []).map((u: any) => [u.id, {username: u.username, followers: u.public_metrics?.followers_count ?? -1}]),
+    );
 
-    // cheap, permanent skips → candidates, oldest first
+    let spam = 0;
     const candidates = (res.data?.data ?? []).filter((t: any) => {
         if (log.answered[t.id]) return false;
         if ((t.referenced_tweets ?? []).some((r: any) => r.type === "retweeted")) return false;
-        const u = (users.get(t.author_id ?? "") || "").toLowerCase();
-        return u && !SKIP_AUTHORS.has(u);
+        const a = info.get(t.author_id ?? "");
+        const u = (a?.username || "").toLowerCase();
+        if (!u || SKIP_AUTHORS.has(u)) return false;
+        const text = stripLeadingMentions(t.text);
+        if (SPAM_RE.test(text)) {
+            spam++;
+            return false;
+        }
+        if (MIN_FOLLOWERS > 0 && a && a.followers >= 0 && a.followers < MIN_FOLLOWERS) {
+            spam++;
+            return false;
+        }
+        return true;
     });
-    candidates.reverse();
-    console.log(`mentions: ${res.data?.data?.length ?? 0} fetched · ${candidates.length} candidate(s) · cap ${CAP} · stage ${stage}`);
+    candidates.reverse(); // oldest first
+    console.log(`mentions: ${res.data?.data?.length ?? 0} fetched · ${spam} spam-skipped · ${candidates.length} candidate(s) · cap ${CAP} · stage ${stage}`);
 
     let replied = 0;
     for (const t of candidates) {
         if (replied >= CAP) break;
         const conv = (t as any).conversation_id ?? t.id;
         const author = t.author_id ?? "";
-        const uname = users.get(author) || "someone";
+        const uname = info.get(author)?.username || "someone";
 
-        // once per thread, ever
-        if (log.threads[conv]) continue;
-        // once per user per 24h
+        if (log.threads[conv]) continue; // once per thread
         const last = log.users[author];
-        if (last && Date.now() - new Date(last).getTime() < DAY_MS) continue;
+        if (last && Date.now() - new Date(last).getTime() < DAY_MS) continue; // once per user / 24h
 
         const text = stripLeadingMentions(t.text);
         if (!text) {
@@ -112,7 +129,7 @@ async function main(): Promise<void> {
 
         const now = new Date().toISOString();
         if (DRY) {
-            console.log(`[DRY] @${uname} (thread ${conv}): "${text.slice(0, 60)}"\n      → ${reply}`);
+            console.log(`[DRY] @${uname}: "${text.slice(0, 60)}"\n      → ${reply}`);
         } else {
             try {
                 const r = await c.v2.reply(reply, t.id);
@@ -124,8 +141,6 @@ async function main(): Promise<void> {
                 continue;
             }
         }
-        // mark thread + user so further mentions in the same thread / from the same
-        // user this run (and within 24h) are skipped
         log.threads[conv] = now;
         log.users[author] = now;
         replied++;
