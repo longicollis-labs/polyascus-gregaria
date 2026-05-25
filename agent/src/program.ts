@@ -39,6 +39,15 @@ export function hostKeypair(): Keypair {
     return Keypair.fromSecretKey(bs58.decode(trimmed));
 }
 
+/** Host-wallet SOL balance — what she has gathered toward the molt. Null if unreadable. */
+export async function hostBalanceSol(): Promise<number | null> {
+    try {
+        return (await connection.getBalance(hostKeypair().publicKey)) / LAMPORTS_PER_SOL;
+    } catch {
+        return null;
+    }
+}
+
 function getProgram(wallet: any): any {
     const provider = new AnchorProvider(connection, wallet, {commitment: "confirmed"});
     return new Program(idl, provider);

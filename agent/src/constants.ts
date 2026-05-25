@@ -64,3 +64,8 @@ export const IDL_PATH = new URL("../idl/polyascus.json", import.meta.url).pathna
 
 // Safety cap on any single claim/feed, in SOL.
 export const ACTION_CAP_SOL = Number(process.env.ACTION_CAP_SOL ?? "1000");
+
+// SOL the host must gather (from creator fees) to fund her own metamorphosis —
+// the program deploy that erupts the externa. She narrates the approach; she
+// cannot molt by her own hand. ~2.23 deploy rent + init + fees + headroom.
+export const MOLT_THRESHOLD_SOL = Number(process.env.MOLT_THRESHOLD_SOL ?? "2.7");

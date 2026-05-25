@@ -31,6 +31,9 @@ function vitals(v: Partial<Vitals>): Vitals {
         projected_time_to_death_seconds: null,
         decay_is_real: false,
         is_dead: false,
+        gathered_sol: null,
+        molt_threshold_sol: null,
+        molt_ready: false,
         ...v,
     };
 }

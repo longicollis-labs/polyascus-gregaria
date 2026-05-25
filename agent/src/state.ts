@@ -7,10 +7,11 @@ import {
     BPS,
     EAT_RATE_BPS_PER_HOUR,
     LAMPORTS_PER_SOL,
+    MOLT_THRESHOLD_SOL,
     PUMP_MINT,
     UNTOUCHED_LIFESPAN_SECONDS,
 } from "./constants.js";
-import {connection, mintPda, readParasite} from "./program.js";
+import {connection, hostBalanceSol, mintPda, readParasite} from "./program.js";
 import {readPumpTelemetry} from "./pumpfun.js";
 
 export type Phase = "unborn" | "larval" | "adult" | "dead";
@@ -26,6 +27,9 @@ export type Vitals = {
     projected_time_to_death_seconds: number | null; // null in larval — no decay yet
     decay_is_real: boolean;
     is_dead: boolean;
+    gathered_sol: number | null; // larval: host-wallet SOL hoarded toward the molt
+    molt_threshold_sol: number | null; // larval: SOL the metamorphosis will cost her
+    molt_ready: boolean; // larval: she has gathered enough to split the shell
 };
 
 const lamports = (bn: {toString(): string}) => Number(bn.toString()) / LAMPORTS_PER_SOL;
@@ -83,12 +87,16 @@ export async function readVitals(): Promise<Vitals> {
             projected_time_to_death_seconds: acct.dead || real === 0 ? 0 : UNTOUCHED_LIFESPAN_SECONDS,
             decay_is_real: true,
             is_dead: acct.dead,
+            gathered_sol: null,
+            molt_threshold_sol: null,
+            molt_ready: false,
         };
     }
 
     // ── Larval: the cyprid on pump.fun. No decay, no death. ──
     if (PUMP_MINT) {
         const t = await readPumpTelemetry();
+        const gathered = await hostBalanceSol();
         return {
             phase: "larval",
             reserve_sol: t.liquidity_sol,
@@ -100,6 +108,9 @@ export async function readVitals(): Promise<Vitals> {
             projected_time_to_death_seconds: null,
             decay_is_real: false,
             is_dead: false,
+            gathered_sol: gathered,
+            molt_threshold_sol: MOLT_THRESHOLD_SOL,
+            molt_ready: gathered !== null && gathered >= MOLT_THRESHOLD_SOL,
         };
     }
 
@@ -115,6 +126,9 @@ export async function readVitals(): Promise<Vitals> {
         projected_time_to_death_seconds: null,
         decay_is_real: false,
         is_dead: false,
+        gathered_sol: null,
+        molt_threshold_sol: null,
+        molt_ready: false,
     };
 }
 
