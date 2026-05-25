@@ -586,14 +586,24 @@ header.title .subtitle {
     color: var(--fg);
 }
 
+.feed-note {
+    margin: 0 0 16px;
+    font-family: var(--serif);
+    font-size: 14.5px;
+    line-height: 1.55;
+    color: var(--fg-soft);
+}
+
 .feed-connect {
+    display: inline-block;
     font-family: var(--sans);
     font-size: 12.5px;
-    letter-spacing: 0.02em;
-    padding: 9px 18px;
+    letter-spacing: 0.04em;
+    padding: 10px 22px;
     border: 1px solid var(--taupe-edge);
     background: var(--taupe);
     color: var(--fg);
+    text-decoration: none;
     cursor: pointer;
     transition: opacity 0.15s;
 }

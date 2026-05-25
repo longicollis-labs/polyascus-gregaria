@@ -117,10 +117,10 @@
                         </div>
                         <div class="oc-row">
                             <dt>Colonisation</dt>
-                            <dd><span id="infection-stage" class="oc-stage">intrusion</span></dd>
+                            <dd><span id="infection-stage" class="oc-stage">rooting</span></dd>
                         </div>
                     </dl>
-                    <a class="feed-jump" href="#colonisation">Feed the colonisation ↓</a>
+                    <a class="feed-jump" href="#colonisation">Join the brood ↓</a>
                     <div class="authorline">
                         <span><em>C. longicollis</em></span>
                         <span class="sep">·</span>
@@ -164,14 +164,12 @@
                         The colonisation is recorded on-chain, in a separate
                         immutable program, and advances through seven irreversible
                         stages. It is not driven by elapsed time, nor by the author
-                        of this record. It is driven by the colony: by what
-                        observers contribute to the parasite. Each contribution —
-                        <em>feeding</em> — is added, permanently, to a cumulative
-                        total; when that total crosses a threshold the subject
-                        advances a stage and cannot return. Sub-threshold offerings
-                        are not wasted — they accumulate toward the next. Her own
-                        account reflects, in her own words, whatever stage she
-                        currently inhabits.
+                        of this record. It is driven by the brood — by every hand
+                        that buys in. Each purchase of <code>$PARASITE</code>
+                        deepens the parasite's hold; as the buying accumulates, the
+                        host crosses from one stage into the next and cannot return.
+                        Her own account reflects, in her own words, whatever stage
+                        she now inhabits.
                     </p>
                     <ol class="stage-ladder" id="stage-ladder">
                         <li data-stage="0"><span class="st-name">intrusion</span><span class="st-thr">from attachment</span></li>
@@ -184,18 +182,9 @@
                     </ol>
                     <p class="feed-progress note" id="feed-progress">reading the colony…</p>
                     <div class="feed" id="feed">
-                        <p class="feed-head">Feed the colonisation</p>
-                        <div class="feed-row">
-                            <button class="feed-amt" data-feed="0.05">0.05&nbsp;◎</button>
-                            <button class="feed-amt" data-feed="0.25">0.25&nbsp;◎</button>
-                            <button class="feed-amt" data-feed="1">1&nbsp;◎</button>
-                            <span class="feed-custom-wrap">
-                                <input id="feed-custom" type="number" min="0.001" step="0.01" placeholder="amount" />
-                                <button class="feed-amt" id="feed-custom-go">feed</button>
-                            </span>
-                        </div>
-                        <button id="feed-connect" class="feed-connect">connect wallet</button>
-                        <p id="feed-status" class="note feed-status">Feeding sends SOL to the colonisation program and deepens her, permanently. It is not a token purchase and is not recoverable.</p>
+                        <p class="feed-head">Join the brood</p>
+                        <p class="feed-note">Every buy deepens her, permanently — you keep the token, and the brood's gathering is what pulls her under. Nothing to donate, nothing to claim back; you simply join, and she goes further.</p>
+                        <a class="feed-connect" href="https://pump.fun/coin/CAqw4VTrgYoeW8s9qox19hNs1p4W6DhCce2DfBgEpump" target="_blank" rel="noopener">Buy&nbsp;$PARASITE</a>
                     </div>
                 </section>
 
@@ -634,6 +623,5 @@
         </div>
 
         <script type="module" src="app.js"></script>
-        <script type="module" src="feed.js"></script>
     </body>
 </html>
