@@ -336,6 +336,15 @@ async function refreshStage() {
                 const s = Number(li.dataset.stage);
                 li.classList.toggle("reached", s <= stage);
                 li.classList.toggle("current", s === stage);
+                // creeping fill: the current node's spine segment advances toward the next stage
+                if (s === stage && stage < 6) {
+                    const prev = stage === 0 ? 0 : thresholds[stage - 1];
+                    const next = thresholds[stage];
+                    const frac = next > prev ? Math.max(0, Math.min(1, (fed - prev) / (next - prev))) : 0;
+                    li.style.setProperty("--fill", (frac * 100).toFixed(1) + "%");
+                } else {
+                    li.style.removeProperty("--fill");
+                }
             });
         }
         if (prog) {

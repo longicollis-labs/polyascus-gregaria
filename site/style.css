@@ -517,6 +517,12 @@ header.title .subtitle {
     background: var(--taupe);
 }
 
+/* the current node's segment fills live toward the next stage (set via --fill) */
+.stage-ladder li.current::before {
+    background: linear-gradient(var(--taupe) var(--fill, 0%), var(--rule) var(--fill, 0%));
+    transition: background 0.6s ease;
+}
+
 /* the node — hollow ahead, filled where reached, haloed at the current stage */
 .st-node {
     position: absolute;
