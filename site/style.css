@@ -20,10 +20,51 @@
     --pulse-dead: #c93434;
     --pulse-unborn: #b8b4ad;
 
+    /* how far the colonisation has reached the record itself — 0 at the surface,
+       driven to 100% as the on-chain stage climbs (set per stage below). */
+    --depth: 0%;
+
     --serif: "EB Garamond", "Iowan Old Style", "Charter", Georgia, "Times New Roman", serif;
     --sans: "Inter", system-ui, -apple-system, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
     --mono: "JetBrains Mono", "IBM Plex Mono", "SF Mono", Menlo, monospace;
 }
+
+/* ── The record registers the descent ───────────────────────────────────────
+   As the on-chain colonisation advances, the parasite deepens its hold on the
+   document: its taupe thickens through the spine and the structural rules — the
+   connective tissue of the record — and the paper steeps a touch warmer, as if
+   sinking from the surface light. Her own black ink is the last thing still hers
+   and is never touched, so the record stays fully legible at every stage. The
+   baseline (no stage / pre-JS / rooting, where she is now) is the current look;
+   only a crossing deepens it, and the change eases in rather than snaps. */
+@property --depth {
+    syntax: "<percentage>";
+    inherits: true;
+    initial-value: 0%;
+}
+
+html[data-stage] {
+    --accent: color-mix(in srgb, #4a3a28 var(--depth), #6f5f4b);
+    --accent-strong: color-mix(in srgb, #34281a var(--depth), #574734);
+    --accent-soft: color-mix(in srgb, #ece1cf var(--depth), #f4f1ec);
+    --taupe: color-mix(in srgb, #a88f76 var(--depth), #c5b6a7);
+    --taupe-edge: color-mix(in srgb, #95775b var(--depth), #b6a48f);
+    --taupe-ink: color-mix(in srgb, #4a3a28 var(--depth), #6f5f4b);
+    --taupe-tint: color-mix(in srgb, #ece1cf var(--depth), #f4f1ec);
+    --rule: color-mix(in srgb, #d6c8b3 var(--depth), #e6e4df);
+    --rule-soft: color-mix(in srgb, #e8decd var(--depth), #f0eeea);
+    --bg: color-mix(in srgb, #faf6ef var(--depth), #ffffff);
+    --bg-soft: color-mix(in srgb, #f1e9db var(--depth), #fafaf9);
+    transition: --depth 1.4s ease;
+}
+
+/* intrusion and rooting sit at the surface; the deepening begins on the first
+   crossing and gathers stage by stage. */
+html[data-stage="2"] { --depth: 22%; }
+html[data-stage="3"] { --depth: 41%; }
+html[data-stage="4"] { --depth: 60%; }
+html[data-stage="5"] { --depth: 80%; }
+html[data-stage="6"] { --depth: 100%; }
 
 * {
     box-sizing: border-box;

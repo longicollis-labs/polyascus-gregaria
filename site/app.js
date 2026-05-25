@@ -351,6 +351,10 @@ async function refreshStage() {
 
         if (stageEl) stageEl.textContent = STAGE_NAMES[Math.min(stage, 6)] || "dormant";
 
+        // let the record itself register the descent — the stylesheet deepens the
+        // parasite's hold (and steeps the paper) as this climbs (see --depth)
+        document.documentElement.dataset.stage = String(Math.max(0, Math.min(stage, 6)));
+
         // persistent sidebar anchor: the stage word + a miniature of the spine,
         // so the descent stays legible while reading far down the record
         const sideStage = document.getElementById("side-stage");
