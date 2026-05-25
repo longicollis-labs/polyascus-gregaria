@@ -57,12 +57,24 @@ jobs:
           PUMP_MINT: ${{ vars.PUMP_MINT }}
         run: npm run run
 
-      - name: Commit log if changed
+      - name: Answer mentions
+        continue-on-error: true
+        working-directory: agent
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          TWITTER_API_KEY: ${{ secrets.TWITTER_API_KEY }}
+          TWITTER_API_SECRET: ${{ secrets.TWITTER_API_SECRET }}
+          TWITTER_ACCESS_TOKEN: ${{ secrets.TWITTER_ACCESS_TOKEN }}
+          TWITTER_ACCESS_SECRET: ${{ secrets.TWITTER_ACCESS_SECRET }}
+          SOLANA_RPC_URL: ${{ vars.SOLANA_RPC_URL }}
+        run: npm run replies
+
+      - name: Commit logs if changed
         run: |
-          if [[ -n "$(git status --porcelain charybdis-log.json)" ]]; then
+          if [[ -n "$(git status --porcelain charybdis-log.json replies-log.json)" ]]; then
             git config user.name "charybdis"
             git config user.email "charybdis@polyascus.com"
-            git add charybdis-log.json
+            git add charybdis-log.json replies-log.json
             git commit -m "log: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
             git push || (git pull --rebase --autostash origin main && git push)
           else

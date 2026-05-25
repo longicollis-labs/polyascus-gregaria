@@ -1,4 +1,4 @@
-import {generateObject} from "ai";
+import {generateObject, generateText} from "ai";
 import {createAnthropic} from "@ai-sdk/anthropic";
 import {readFileSync} from "node:fs";
 import {z} from "zod";
@@ -50,4 +50,26 @@ export async function decide(input: AgentInput): Promise<Decision> {
     });
 
     return object;
+}
+
+// She answers a creature from the dry world — in character, one or two lines.
+export async function replyToMention(input: {mention: string; author: string; stage: string}): Promise<string> {
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!apiKey) throw new Error("ANTHROPIC_API_KEY not set");
+
+    const anthropic = createAnthropic({apiKey});
+    const systemPrompt = readFileSync(SYSTEM_PROMPT_PATH, "utf8");
+
+    const {text} = await generateText({
+        model: anthropic(MODEL),
+        system: systemPrompt,
+        prompt:
+            `A creature from the dry world (@${input.author}) leans over the water and says to you:\n\n` +
+            `"${input.mention}"\n\n` +
+            `You are at the ${input.stage} stage of your colonisation. Answer them — only your own words, ` +
+            `one or two lines, in character. No hashtags, no @-handles, no surrounding quotation marks.`,
+        maxRetries: 2,
+    });
+
+    return text.trim().replace(/^["']+|["']+$/g, "").slice(0, 270);
 }
