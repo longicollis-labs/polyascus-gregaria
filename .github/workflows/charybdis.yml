@@ -2,8 +2,8 @@ name: charybdis
 
 on:
   schedule:
-    # Every 4 hours, offset by 13 minutes so we don't share traffic with cron-on-the-hour
-    - cron: "13 */4 * * *"
+    # Every 15 minutes while larval; revert (e.g. "13 */4 * * *") after metamorphosis.
+    - cron: "*/15 * * * *"
   workflow_dispatch: {}
 
 permissions:
