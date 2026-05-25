@@ -67,9 +67,11 @@ export async function replyToMention(input: {mention: string; author: string; st
             `A creature from the dry world (@${input.author}) leans over the water and says to you:\n\n` +
             `"${input.mention}"\n\n` +
             `You are at the ${input.stage} stage of your colonisation. Answer them — only your own words, ` +
-            `one or two lines, in character. No hashtags, no @-handles, no surrounding quotation marks.`,
+            `one or two lines, under 200 characters, in character. No hashtags, no @-handles, no surrounding quotation marks.`,
         maxRetries: 2,
     });
 
-    return text.trim().replace(/^["']+|["']+$/g, "").slice(0, 270);
+    let r = text.trim().replace(/^["']+|["']+$/g, "");
+    if (r.length > 275) r = r.slice(0, r.slice(0, 276).lastIndexOf(" ")).trim(); // cut on a word boundary
+    return r;
 }
