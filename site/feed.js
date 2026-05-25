@@ -76,18 +76,18 @@ async function connect() {
         const pk = res?.publicKey || p.publicKey;
         connected = new PublicKey(pk.toString());
         const btn = document.getElementById("feed-connect");
-        if (btn) btn.textContent = "connected · " + short(connected);
+        if (btn) btn.textContent = "Connected · " + short(connected);
         status("Pick an amount. Every offering settles into her, permanently.");
         return connected;
     } catch {
-        status("you pulled your hand back.", "err");
+        status("You pulled your hand back.", "err");
         return null;
     }
 }
 
 async function feed(sol) {
     if (!(sol > 0)) {
-        status("enter an amount first.", "err");
+        status("Enter an amount first.", "err");
         return;
     }
     const p = provider();
@@ -98,7 +98,7 @@ async function feed(sol) {
     if (!connected && !(await connect())) return;
 
     try {
-        status("she is waiting…");
+        status("She is waiting…");
         const lamports = BigInt(Math.round(sol * 1e9));
         const tx = new Transaction().add(feedIx(connected, lamports));
         const {blockhash} = await conn.getLatestBlockhash("confirmed");
@@ -116,20 +116,20 @@ async function feed(sol) {
 
         // Poll over HTTP — the public RPC may not serve the websocket that
         // Connection.confirmTransaction relies on.
-        status("the offering broke the surface. confirming…");
+        status("The offering broke the surface. Confirming…");
         let confirmed = false;
         for (let i = 0; i < 30 && !confirmed; i++) {
             await new Promise((r) => setTimeout(r, 1500));
             const st = await conn.getSignatureStatuses([signature]);
             const s = st?.value?.[0];
-            if (s?.err) throw new Error("the colonisation rejected it");
+            if (s?.err) throw new Error("the transaction was not accepted on-chain.");
             if (s && (s.confirmationStatus === "confirmed" || s.confirmationStatus === "finalized")) confirmed = true;
         }
-        status(confirmed ? "it settled into her. she is deeper now." : "sent — it will settle shortly.", "ok");
+        status(confirmed ? "It settled into her. She is deeper now." : "Sent — it will settle shortly.", "ok");
         window.__refreshStage?.();
     } catch (e) {
         const m = (e && e.message) || String(e);
-        status(/reject|denied|cancel/i.test(m) ? "you pulled your hand back." : "it would not take: " + m, "err");
+        status(/reject|denied|cancel/i.test(m) ? "You pulled your hand back." : "It would not take: " + m, "err");
     }
 }
 
