@@ -16,6 +16,7 @@ export type LogEntry = {
         reserve_sol: number;
         supply_tokens: number;
         vault_sol: number | null;
+        market_cap_usd: number | null;
         lifetime_seconds: number;
         is_dead: boolean;
     };

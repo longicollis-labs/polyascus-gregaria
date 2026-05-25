@@ -1,58 +1,44 @@
-import {sendClaim, sendFeed, sendPulse} from "./chain.js";
-import {ACTION_CAP_SOL, DRY_RUN} from "./constants.js";
-import {appendLog, readLog, recentPosts, secondsSince, vaultGrowth24h} from "./log.js";
+import {DRY_RUN} from "./constants.js";
+import {appendLog, readLog, recentPosts, secondsSince, type LogEntry} from "./log.js";
 import {decide, type AgentInput} from "./llm.js";
 import {readVitals} from "./state.js";
 import {postTweet} from "./x.js";
 
+// Most recent market cap recorded in the log, for the brood-motion signal.
+function lastMcap(log: LogEntry[]): number | null {
+    for (let i = log.length - 1; i >= 0; i--) {
+        const m = log[i]!.vitals_snapshot.market_cap_usd;
+        if (typeof m === "number" && m > 0) return m;
+    }
+    return null;
+}
+
+// One word for the brood's motion — the only outside signal Charybdis gets.
+function describeBrood(cur: number | null, prev: number | null): AgentInput["brood"] {
+    if (cur == null || cur === 0) return "still";
+    if (prev == null || prev === 0) return "steady";
+    if (cur >= prev * 1.05) return "swelling";
+    if (cur <= prev * 0.95) return "thinning";
+    return "steady";
+}
+
 async function main(): Promise<void> {
     const vitals = await readVitals();
     const log = readLog();
+    const brood = describeBrood(vitals.market_cap_usd, lastMcap(log));
 
     const input: AgentInput = {
-        vitals,
-        recent_posts: recentPosts(log, 5),
+        recent_posts: recentPosts(log, 6),
         since_last_post_seconds: secondsSince(log, (e) => !!e.posted_tweet_id),
-        since_last_claim_seconds: secondsSince(log, (e) => e.action_kind === "claim"),
-        since_last_feed_seconds: secondsSince(log, (e) => e.action_kind === "feed"),
-        vault_growth_24h_sol: vaultGrowth24h(log, vitals.vault_sol),
+        brood,
     };
-
-    console.log("phase:", vitals.phase, "vitals:", input.vitals);
+    console.log("brood:", brood, "(phase:", vitals.phase + ")");
 
     const decision = await decide(input);
     console.log("decision:", decision);
 
+    // She is a narrator; she does not act on-chain. Claims/feeds are operator-run.
     let postedTweetId: string | null = null;
-    let actionTxSig: string | null = null;
-
-    // Dead parasite: feed/pulse are pointless (the program reverts feed, no-ops
-    // pulse). Claim still works from the corpse. Mirror that here.
-    if (vitals.is_dead && (decision.action_kind === "feed" || decision.action_kind === "pulse")) {
-        console.log(`parasite is dead; downgrading ${decision.action_kind} to none`);
-        decision.action_kind = "none";
-    }
-
-    // Validate claim/feed amounts. In larval phase, `claim` collects all accrued
-    // creator fees and ignores the amount, so a zero amount is acceptable there.
-    if (decision.action_kind === "claim" || decision.action_kind === "feed") {
-        const amt = decision.action_amount_sol;
-        const larvalClaim = vitals.phase === "larval" && decision.action_kind === "claim";
-        if (!larvalClaim) {
-            if (!Number.isFinite(amt) || amt <= 0) {
-                console.warn(`invalid action_amount_sol: ${amt}; downgrading to none`);
-                decision.action_kind = "none";
-            } else if (amt > ACTION_CAP_SOL) {
-                console.warn(`amount ${amt} exceeds cap ${ACTION_CAP_SOL} SOL; downgrading`);
-                decision.action_kind = "none";
-            } else if (vitals.vault_sol !== null && amt > vitals.vault_sol) {
-                console.warn(`amount ${amt} > vault ${vitals.vault_sol}; downgrading`);
-                decision.action_kind = "none";
-            }
-        }
-    }
-
-    // Charybdis must post before she acts. If the post fails, the action defers.
     if (decision.post_text && decision.post_text.trim().length > 0) {
         if (DRY_RUN) {
             console.log("[DRY] would post:", decision.post_text);
@@ -63,31 +49,6 @@ async function main(): Promise<void> {
                 console.log("posted:", postedTweetId);
             } catch (err) {
                 console.error("post failed:", err);
-                console.error("skipping action this invocation");
-                decision.action_kind = "none";
-            }
-        }
-    } else if (decision.action_kind !== "none" && decision.action_kind !== "pulse") {
-        console.warn("decision had action but no post; downgrading to none");
-        decision.action_kind = "none";
-    }
-
-    if (decision.action_kind !== "none") {
-        if (DRY_RUN) {
-            console.log(`[DRY] would ${decision.action_kind} amount=${decision.action_amount_sol}`);
-            actionTxSig = "DRY_RUN";
-        } else {
-            try {
-                if (decision.action_kind === "claim") {
-                    actionTxSig = await sendClaim(decision.action_amount_sol, vitals.phase);
-                } else if (decision.action_kind === "feed") {
-                    actionTxSig = await sendFeed(decision.action_amount_sol, vitals.phase);
-                } else if (decision.action_kind === "pulse") {
-                    actionTxSig = await sendPulse(vitals.phase);
-                }
-                console.log(`${decision.action_kind} sig:`, actionTxSig);
-            } catch (err) {
-                console.error("action failed:", err);
             }
         }
     }
@@ -98,19 +59,19 @@ async function main(): Promise<void> {
         deliberation: decision.deliberation,
         post_text: decision.post_text || null,
         posted_tweet_id: postedTweetId,
-        action_kind: decision.action_kind,
-        action_amount_sol: decision.action_amount_sol,
-        action_tx_sig: actionTxSig,
+        action_kind: "none",
+        action_amount_sol: 0,
+        action_tx_sig: null,
         vitals_snapshot: {
             phase: vitals.phase,
             reserve_sol: vitals.reserve_sol,
             supply_tokens: vitals.supply_tokens,
             vault_sol: vitals.vault_sol,
+            market_cap_usd: vitals.market_cap_usd,
             lifetime_seconds: vitals.lifetime_seconds,
             is_dead: vitals.is_dead,
         },
     });
-
     console.log("done");
 }
 
