@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "create-token": "tsx create-pump-token.ts",
-    "initialize": "tsx initialize-externa.ts"
+    "initialize": "tsx initialize-externa.ts",
+    "initialize-infection": "tsx initialize-infection.ts"
   },
   "dependencies": {
     "@coral-xyz/anchor": "^0.31.1",

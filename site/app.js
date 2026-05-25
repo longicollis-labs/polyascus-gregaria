@@ -6,6 +6,8 @@ const PROGRAM_ID = "6GtAKbjHW5fdBPfZYd2zt5FvFk7fPDUhezScV9BFN1qE";
 const PARASITE_PDA = "8SMaWuppqJxdh2GbWZJ1coYygMMQfgeaj2K1NUn9qGG";
 const EXTERNA_MINT = "Hw5muMCG6b4RucNb2ep8n7EWwdDPjvzsZmZmEeZaZCMb";
 const PUMP_MINT = "CAqw4VTrgYoeW8s9qox19hNs1p4W6DhCce2DfBgEpump"; // larval phase
+const INFECTION_PDA = "6FVKnUGGv3LuwNGVwyiuCPsQKt9MrhZwDDU7ZybmTgtc"; // on-chain colonisation stage
+const STAGE_NAMES = ["intrusion", "rooting", "castration", "feminisation", "release", "merger", "consumed"];
 
 const SOLANA_RPC_URL = "https://api.mainnet-beta.solana.com";
 const DEXSCREENER = "https://api.dexscreener.com/latest/dex/tokens/";
@@ -283,10 +285,29 @@ function initScrollspy() {
     if (targets.length > 0) setActive(targets[0].el.id);
 }
 
+// ── Stage (the irreversible on-chain colonisation) ──────────────────────
+
+async function refreshStage() {
+    const el = document.getElementById("infection-stage");
+    if (!el) return;
+    try {
+        const info = await rpc("getAccountInfo", [INFECTION_PDA, {encoding: "base64"}]);
+        if (!info || !info.value || !info.value.data) {
+            el.textContent = "dormant";
+            return;
+        }
+        // stage byte sits after disc(8) + host(32) + recipient(32) + thresholds(48)
+        const stage = b64ToBytes(info.value.data[0])[120];
+        el.textContent = STAGE_NAMES[Math.min(stage, 6)] || "dormant";
+    } catch (e) {
+        /* leave as-is */
+    }
+}
+
 // ── Loop ────────────────────────────────────────────────────────────────
 
 async function loop() {
-    await Promise.all([refreshVitals(), refreshPosts()]);
+    await Promise.all([refreshVitals(), refreshPosts(), refreshStage()]);
     setTimeout(loop, POLL_MS);
 }
 
