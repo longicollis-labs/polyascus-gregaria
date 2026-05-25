@@ -311,6 +311,51 @@ nav.toc a.active .n {
     font-variant-numeric: tabular-nums;
 }
 
+/* the live colonisation stage — the narrative state, set apart from the body
+   vitals below and tied to the spine by the taupe accent it carries everywhere */
+.sidebar-stage {
+    margin-bottom: 4px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--rule-soft);
+}
+
+.sidebar-stage .v {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 13px;
+    color: var(--taupe-ink);
+}
+
+/* a miniature of the §Colonisation spine — seven irreversible stages, filled to
+   where she has reached, the current one haloed; updates live with the chain */
+.side-spine {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 9px;
+}
+
+.side-spine i {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    border: 1.5px solid var(--taupe-edge);
+    background: var(--bg);
+    box-sizing: border-box;
+    flex-shrink: 0;
+}
+
+.side-spine i.reached {
+    background: var(--taupe);
+    border-color: var(--taupe);
+}
+
+.side-spine i.current {
+    border-color: var(--taupe-ink);
+    background: var(--taupe);
+    box-shadow: 0 0 0 2.5px var(--taupe-tint);
+}
+
 /* ── Content ───────────────────────────────────────────────────────────── */
 
 .content {

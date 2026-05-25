@@ -351,6 +351,18 @@ async function refreshStage() {
 
         if (stageEl) stageEl.textContent = STAGE_NAMES[Math.min(stage, 6)] || "dormant";
 
+        // persistent sidebar anchor: the stage word + a miniature of the spine,
+        // so the descent stays legible while reading far down the record
+        const sideStage = document.getElementById("side-stage");
+        if (sideStage) sideStage.textContent = STAGE_NAMES[Math.min(stage, 6)] || "dormant";
+        const sideSpine = document.getElementById("side-spine");
+        if (sideSpine) {
+            Array.from(sideSpine.children).forEach((dot, i) => {
+                dot.classList.toggle("reached", i <= stage);
+                dot.classList.toggle("current", i === stage);
+            });
+        }
+
         if (ladder) {
             ladder.querySelectorAll("li").forEach((li) => {
                 const s = Number(li.dataset.stage);
