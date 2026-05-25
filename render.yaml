@@ -1,5 +1,6 @@
-# 24/7 trigger for Charybdis — a Render cron that dispatches the agent every
-# 15 minutes, independent of any local machine. GitHub's own schedule is
+# 24/7 trigger for Charybdis — a Render cron that runs every ~5 minutes and
+# paces her to an organic, randomised ~20–25 min cadence (the gate lives in
+# trigger.mjs). Independent of any local machine; GitHub's own schedule is
 # unreliable, so we drive it externally.
 #
 # Deploy: Render dashboard → New → Blueprint → connect this repo → set GH_TOKEN
@@ -14,7 +15,7 @@ services:
     name: charybdis-tick
     runtime: node
     plan: starter
-    schedule: "*/15 * * * *"
+    schedule: "*/5 * * * *"
     buildCommand: "true"
     startCommand: "node agent/trigger.mjs"
     envVars:
