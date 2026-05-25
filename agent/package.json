@@ -6,6 +6,8 @@
   "scripts": {
     "run": "tsx src/index.ts",
     "dry": "DRY_RUN=1 tsx src/index.ts",
+    "fee-router": "tsx src/fee-router.ts",
+    "fee-router-dry": "DRY_RUN=1 tsx src/fee-router.ts",
     "test-prompt": "tsx scripts/test-prompt.ts",
     "typecheck": "tsc --noEmit"
   },

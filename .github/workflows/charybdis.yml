@@ -30,6 +30,19 @@ jobs:
         working-directory: agent
         run: npm ci --no-audit --no-fund
 
+      # Route creator fees (∝ all trading) into the infection so buys drive her
+      # stage. Runs before the agent, so a fee-driven crossing is narrated in the
+      # same invocation. Non-fatal: a failure here must not block her post.
+      - name: Route creator fees into the infection
+        if: ${{ vars.PUMP_MINT != '' }}
+        continue-on-error: true
+        working-directory: agent
+        env:
+          HOST_PRIVATE_KEY: ${{ secrets.HOST_PRIVATE_KEY }}
+          SOLANA_RPC_URL: ${{ vars.SOLANA_RPC_URL }}
+          PUMP_MINT: ${{ vars.PUMP_MINT }}
+        run: npm run fee-router
+
       - name: Run agent
         working-directory: agent
         env:
