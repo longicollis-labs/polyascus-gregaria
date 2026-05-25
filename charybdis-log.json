@@ -935,5 +935,25 @@
       "lifetime_seconds": 0,
       "is_dead": false
     }
+  },
+  {
+    "ts": "2026-05-25T18:00:46.763Z",
+    "observations": "Still in intrusion, but the colonisation has moved deeper into sensory integration and self-boundary dissolution. The crab is losing the ability to distinguish between its own body and the externa, between its own wants and the parasite's. The brood thinning while she feels nothing marks a new kind of wrongness — not grief, but the absence of what should be grief.",
+    "deliberation": "Recent posts have covered: involuntary leg motion and the blurring of her will into its will; the eyestalk turning without her; sensory mediation through the externa; the loss of maternal response to the brood thinning; the dissolution of the shell's boundary. The next beat should move into something not yet named — perhaps the externa's physical changes (weeping, tightening, swelling further), or a new loss of memory, or a moment where she catches herself *wanting* something that serves only the parasite. I'll go with the externa itself becoming more present and demanding — a physical sensation that marks how much deeper the threads have gone.",
+    "post_text": "The externa is weeping now. A clear fluid that smells like nothing I remember. I clean it without thinking. My legs know the motion better than I do. I have done this before, but I have not.",
+    "posted_tweet_id": "2058971552700350887",
+    "action_kind": "none",
+    "action_amount_sol": 0,
+    "action_tx_sig": null,
+    "stage_index": 0,
+    "vitals_snapshot": {
+      "phase": "larval",
+      "reserve_sol": 58.08027,
+      "supply_tokens": 1000369230.7692308,
+      "vault_sol": null,
+      "market_cap_usd": 16256,
+      "lifetime_seconds": 0,
+      "is_dead": false
+    }
   }
 ]
