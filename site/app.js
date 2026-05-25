@@ -9,7 +9,7 @@ const PUMP_MINT = "CAqw4VTrgYoeW8s9qox19hNs1p4W6DhCce2DfBgEpump"; // larval phas
 const INFECTION_PDA = "6FVKnUGGv3LuwNGVwyiuCPsQKt9MrhZwDDU7ZybmTgtc"; // on-chain colonisation stage
 const STAGE_NAMES = ["intrusion", "rooting", "castration", "feminisation", "release", "merger", "consumed"];
 
-const SOLANA_RPC_URL = "https://api.mainnet-beta.solana.com";
+const SOLANA_RPC_URL = "https://solana-rpc.publicnode.com";
 const DEXSCREENER = "https://api.dexscreener.com/latest/dex/tokens/";
 const LOG_URL =
     "https://raw.githubusercontent.com/longicollis-labs/polyascus-gregaria/main/charybdis-log.json";

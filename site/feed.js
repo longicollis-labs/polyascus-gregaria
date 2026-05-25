@@ -11,7 +11,7 @@ import {
     SystemProgram,
 } from "https://esm.sh/@solana/web3.js@1.98.0";
 
-const RPC = "https://api.mainnet-beta.solana.com";
+const RPC = "https://solana-rpc.publicnode.com";
 const INFECTION_PROGRAM = new PublicKey("3vz8e6UCeWgGMh689mNTfxoZcY5KoKtMPbewBQJcT5v2");
 const INFECTION_PDA = new PublicKey("6FVKnUGGv3LuwNGVwyiuCPsQKt9MrhZwDDU7ZybmTgtc");
 // sha256("global:feed")[0..8] — verified against the on-chain IDL.
@@ -101,7 +101,7 @@ async function feed(sol) {
         status("she is waiting…");
         const lamports = BigInt(Math.round(sol * 1e9));
         const tx = new Transaction().add(feedIx(connected, lamports));
-        const {blockhash, lastValidBlockHeight} = await conn.getLatestBlockhash("confirmed");
+        const {blockhash} = await conn.getLatestBlockhash("confirmed");
         tx.recentBlockhash = blockhash;
         tx.feePayer = connected;
 
@@ -114,9 +114,18 @@ async function feed(sol) {
             signature = await conn.sendRawTransaction(signed.serialize());
         }
 
+        // Poll over HTTP — the public RPC may not serve the websocket that
+        // Connection.confirmTransaction relies on.
         status("the offering broke the surface. confirming…");
-        await conn.confirmTransaction({signature, blockhash, lastValidBlockHeight}, "confirmed");
-        status("it settled into her. she is deeper now.", "ok");
+        let confirmed = false;
+        for (let i = 0; i < 30 && !confirmed; i++) {
+            await new Promise((r) => setTimeout(r, 1500));
+            const st = await conn.getSignatureStatuses([signature]);
+            const s = st?.value?.[0];
+            if (s?.err) throw new Error("the colonisation rejected it");
+            if (s && (s.confirmationStatus === "confirmed" || s.confirmationStatus === "finalized")) confirmed = true;
+        }
+        status(confirmed ? "it settled into her. she is deeper now." : "sent — it will settle shortly.", "ok");
         window.__refreshStage?.();
     } catch (e) {
         const m = (e && e.message) || String(e);
