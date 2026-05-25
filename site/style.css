@@ -405,6 +405,55 @@ header.title .subtitle {
     hyphens: none;
 }
 
+.onchain {
+    margin: 0 0 28px;
+    display: grid;
+    gap: 7px;
+    max-width: 540px;
+}
+
+.oc-row {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+}
+
+.oc-row dt {
+    flex: 0 0 92px;
+    font-family: var(--sans);
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.13em;
+    color: var(--muted);
+}
+
+.oc-row dd {
+    margin: 0;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    color: var(--fg-soft);
+    word-break: break-all;
+    line-height: 1.45;
+}
+
+.oc-addr {
+    color: var(--fg-soft);
+    text-decoration: none;
+    border-bottom: 1px solid var(--rule);
+}
+
+.oc-addr:hover {
+    color: var(--fg);
+    border-bottom-color: var(--muted);
+}
+
+.oc-stage {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 15px;
+    color: var(--accent);
+}
+
 /* ── Sections ──────────────────────────────────────────────────────────── */
 
 section {
