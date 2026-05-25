@@ -8,7 +8,7 @@ mechanics for real: a virtual-reserve bonding curve, continuous decay, a host
 keepalive vault, and irreversible termination.
 
 Site — [polyascus.com](https://polyascus.com)
-Field record — [@charybdisleene](https://x.com/charybdisleene)
+Field record — [@CrabCharybdis](https://x.com/CrabCharybdis)
 
 ## Abstract
 

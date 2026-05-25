@@ -63,7 +63,7 @@ describe("polyascus externa", () => {
     await fund(alice.publicKey, 100 * ONE_SOL);
 
     await program.methods
-      .initialize(host.publicKey, recipient.publicKey, "charybdis_obs")
+      .initialize(host.publicKey, recipient.publicKey, "CrabCharybdis")
       .accountsPartial({
         payer: payer.publicKey,
         parasite,
@@ -167,7 +167,7 @@ describe("polyascus externa", () => {
     assert.isFalse(p.dead);
     assert.equal(p.host.toBase58(), host.publicKey.toBase58());
     assert.equal(p.recipient.toBase58(), recipient.publicKey.toBase58());
-    assert.equal(p.hostHandle, "charybdis_obs");
+    assert.equal(p.hostHandle, "CrabCharybdis");
   });
 
   it("buy mints, skims the 2.2% fee, sets born_at", async () => {
