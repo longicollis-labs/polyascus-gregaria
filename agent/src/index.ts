@@ -1,6 +1,7 @@
 import {DRY_RUN} from "./constants.js";
 import {appendLog, readLog, recentPosts, secondsSince, type LogEntry} from "./log.js";
 import {decide, type AgentInput} from "./llm.js";
+import {readStage} from "./infection.js";
 import {readVitals} from "./state.js";
 import {postTweet} from "./x.js";
 
@@ -26,13 +27,15 @@ async function main(): Promise<void> {
     const vitals = await readVitals();
     const log = readLog();
     const brood = describeBrood(vitals.market_cap_usd, lastMcap(log));
+    const inf = await readStage();
 
     const input: AgentInput = {
         recent_posts: recentPosts(log, 6),
         since_last_post_seconds: secondsSince(log, (e) => !!e.posted_tweet_id),
         brood,
+        stage: inf?.name ?? "intrusion",
     };
-    console.log("brood:", brood, "(phase:", vitals.phase + ")");
+    console.log("stage:", inf?.name ?? "intrusion", "| brood:", brood, "(phase:", vitals.phase + ")");
 
     const decision = await decide(input);
     console.log("decision:", decision);

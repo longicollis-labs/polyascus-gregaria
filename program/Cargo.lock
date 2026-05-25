@@ -851,6 +851,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "infection"
+version = "0.1.0"
+dependencies = [
+ "anchor-lang",
+]
+
+[[package]]
 name = "inout"
 version = "0.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"

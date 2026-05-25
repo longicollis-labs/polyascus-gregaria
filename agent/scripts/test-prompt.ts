@@ -20,6 +20,7 @@ const scenarios: Scenario[] = [
             recent_posts: recent(["A leg on my left side stopped answering this morning."]),
             since_last_post_seconds: 3600,
             brood: "swelling",
+            stage: "rooting",
         },
     },
     {
@@ -28,6 +29,7 @@ const scenarios: Scenario[] = [
             recent_posts: recent(["I cleaned the externa again. I have started to like it."]),
             since_last_post_seconds: 5400,
             brood: "thinning",
+            stage: "feminisation",
         },
     },
     {
@@ -36,9 +38,10 @@ const scenarios: Scenario[] = [
             recent_posts: recent(["My eyes track it without my asking."]),
             since_last_post_seconds: 1800,
             brood: "steady",
+            stage: "merger",
         },
     },
-    {name: "4. still / quiet", input: {recent_posts: [], since_last_post_seconds: null, brood: "still"}},
+    {name: "4. still / quiet", input: {recent_posts: [], since_last_post_seconds: null, brood: "still", stage: "intrusion"}},
 ];
 
 const FORBIDDEN = [

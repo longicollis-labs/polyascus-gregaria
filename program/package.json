@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "license": "MIT",
   "scripts": {
-    "build:tests": "tsc tests/polyascus.ts --outDir dist-tests --module commonjs --target es2020 --esModuleInterop --resolveJsonModule --skipLibCheck --moduleResolution node",
-    "test": "npm run build:tests && RUST_LOG=off mocha dist-tests/polyascus.js -t 1000000"
+    "build:tests": "tsc tests/polyascus.ts tests/infection.ts --outDir dist-tests --module commonjs --target es2020 --esModuleInterop --resolveJsonModule --skipLibCheck --moduleResolution node",
+    "test": "npm run build:tests && RUST_LOG=off mocha dist-tests/*.js -t 1000000"
   },
   "dependencies": {
     "@coral-xyz/anchor": "^0.31.1"

@@ -25,6 +25,9 @@ export type AgentInput = {
     recent_posts: {text: string; posted_at_iso: string}[];
     since_last_post_seconds: number | null;
     brood: "swelling" | "thinning" | "steady" | "still";
+    // How far the colonisation has progressed (on-chain, irreversible):
+    // intrusion → rooting → castration → feminisation → release → merger → consumed.
+    stage: string;
 };
 
 export async function decide(input: AgentInput): Promise<Decision> {

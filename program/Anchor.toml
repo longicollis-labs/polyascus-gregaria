@@ -6,9 +6,11 @@ skip-lint = false
 
 [programs.localnet]
 polyascus = "6GtAKbjHW5fdBPfZYd2zt5FvFk7fPDUhezScV9BFN1qE"
+infection = "3vz8e6UCeWgGMh689mNTfxoZcY5KoKtMPbewBQJcT5v2"
 
 [programs.devnet]
 polyascus = "6GtAKbjHW5fdBPfZYd2zt5FvFk7fPDUhezScV9BFN1qE"
+infection = "3vz8e6UCeWgGMh689mNTfxoZcY5KoKtMPbewBQJcT5v2"
 
 [registry]
 url = "https://api.apr.dev"

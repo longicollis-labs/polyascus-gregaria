@@ -31,6 +31,11 @@ export const PROGRAM_ID = new PublicKey(
     process.env.POLYASCUS_PROGRAM_ID ?? "6GtAKbjHW5fdBPfZYd2zt5FvFk7fPDUhezScV9BFN1qE",
 );
 
+// The infection program — the irreversible on-chain colonisation stage.
+export const INFECTION_PROGRAM_ID = new PublicKey(
+    process.env.INFECTION_PROGRAM_ID ?? "3vz8e6UCeWgGMh689mNTfxoZcY5KoKtMPbewBQJcT5v2",
+);
+
 // The pump.fun token mint (the larval shell). Empty until launch.
 export const PUMP_MINT = process.env.PUMP_MINT ?? "";
 
