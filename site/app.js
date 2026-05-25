@@ -5,7 +5,7 @@
 const PROGRAM_ID = "6GtAKbjHW5fdBPfZYd2zt5FvFk7fPDUhezScV9BFN1qE";
 const PARASITE_PDA = "8SMaWuppqJxdh2GbWZJ1coYygMMQfgeaj2K1NUn9qGG";
 const EXTERNA_MINT = "Hw5muMCG6b4RucNb2ep8n7EWwdDPjvzsZmZmEeZaZCMb";
-const PUMP_MINT = ""; // set after the pump.fun launch (larval phase)
+const PUMP_MINT = "CAqw4VTrgYoeW8s9qox19hNs1p4W6DhCce2DfBgEpump"; // larval phase
 
 const SOLANA_RPC_URL = "https://api.mainnet-beta.solana.com";
 const DEXSCREENER = "https://api.dexscreener.com/latest/dex/tokens/";
