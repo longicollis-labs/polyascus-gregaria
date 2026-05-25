@@ -67,7 +67,8 @@ async function main(): Promise<void> {
     const c = client();
     const log = loadLog();
     const stage = (await readStage())?.name ?? "rooting";
-    const inner = renderInner(loadInnerState());
+    const innerState = loadInnerState();
+    const inner = renderInner(innerState);
 
     const res = await c.v2.userMentionTimeline(USER_ID, {
         max_results: 25,
@@ -116,9 +117,15 @@ async function main(): Promise<void> {
             if (!DRY) log.answered[t.id] = {skipped: "empty"};
             continue;
         }
+        // If she has already clocked this voice, answer as one who remembers it.
+        const clocked = innerState.known_voices.find(
+            (v) => v.handle.replace(/^@/, "").toLowerCase() === uname.toLowerCase(),
+        );
+        const remembered = clocked && clocked.note.trim() ? {note: clocked.note} : undefined;
+
         let reply = "";
         try {
-            reply = await replyToMention({mention: text, author: uname, stage, inner});
+            reply = await replyToMention({mention: text, author: uname, stage, inner, remembered});
         } catch (e) {
             console.error("gen failed", t.id, (e as Error)?.message || e);
             continue;

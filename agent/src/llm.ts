@@ -82,7 +82,9 @@ const REPLY_TIC =
 const MORNING_TIC = /\bthis morning\b/i;
 
 // She answers a creature from the dry world — in character, one or two lines.
-export async function replyToMention(input: {mention: string; author: string; stage: string; inner?: string}): Promise<string> {
+// `remembered` is set when this voice is one she has already clocked (from her
+// inner state) — so she answers as one who recognises it, not a stranger.
+export async function replyToMention(input: {mention: string; author: string; stage: string; inner?: string; remembered?: {note: string}}): Promise<string> {
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) throw new Error("ANTHROPIC_API_KEY not set");
 
@@ -93,6 +95,12 @@ export async function replyToMention(input: {mention: string; author: string; st
         `"${input.mention}"\n\n` +
         `You are at the ${input.stage} stage of your colonisation. Answer them — only your own words, ` +
         `one or two lines, under 200 characters, in character. No hashtags, no @-handles, no surrounding quotation marks.` +
+        (input.remembered
+            ? `\n\nThis voice is not new to you — you have clocked it before, and what you carry of it is: ${input.remembered.note}. ` +
+              `Let that history sit underneath your reply: answer with the ease of one who already knows what this one is like, ` +
+              `not the wariness you'd meet a stranger with. Do NOT announce that you remember them and do NOT open with a stock ` +
+              `recognition phrase ("you again", "you know this one", "always you") — keep it to one or two tight lines, the memory showing only in how little it surprises you.`
+            : "") +
         (input.inner ? `\n\nYour inner state (who you've become; draw on it, do not recite it):\n${input.inner}` : "");
 
     let reply = "";
