@@ -1,13 +1,15 @@
 // Paces Charybdis to an organic, randomised ~20–25 min cadence — but fires
 // immediately when the colonisation advances a stage, so feeders see her react.
 //
-// Run every ~5 min by the Render cron. Each run it reads her committed log (via
-// the GitHub contents API, so no CDN-cache lag) and the on-chain stage. It
-// dispatches the agent workflow when EITHER a *randomised* 20–25 min has passed
-// since her last real post ("when she feels like it") OR the on-chain stage is
-// now deeper than the last one she recorded (someone just fed her — the payoff
-// beat should not wait). GitHub's own schedule is unreliable, so we drive and
-// pace it here. Needs GH_TOKEN (repo scope) in the env; SOLANA_RPC_URL optional.
+// Run every ~5 min by the Render cron. Each run it reads her committed log and
+// the on-chain stage, then dispatches the agent workflow when EITHER a
+// *randomised* 20–25 min has passed since her last real post ("when she feels
+// like it") OR the on-chain stage is now deeper than the last one she recorded.
+//
+// The log is read from raw.githubusercontent (public, no token) first, with the
+// authenticated contents API as fallback. If BOTH fail we HOLD — a failed read
+// must never trigger a post (that caused 5-min spam before). The dispatch POST
+// needs GH_TOKEN (repo/actions scope); SOLANA_RPC_URL optional.
 
 const REPO = "longicollis-labs/polyascus-gregaria";
 const RPC = process.env.SOLANA_RPC_URL || "https://api.mainnet-beta.solana.com";
@@ -20,28 +22,38 @@ const base = {
     "User-Agent": "charybdis-cron",
 };
 
-// Minutes since her last *actual* post, and the last stage she recorded.
-let sinceMin = Infinity;
-let lastStage = null;
-try {
-    const r = await fetch(`https://api.github.com/repos/${REPO}/contents/charybdis-log.json?ref=main`, {
-        headers: {...base, Accept: "application/vnd.github.raw"},
-    });
-    if (r.ok) {
-        const log = JSON.parse(await r.text());
-        const posted = log.filter((e) => e.posted_tweet_id && e.posted_tweet_id !== "DRY_RUN");
-        if (posted.length) {
-            sinceMin = (Date.now() - new Date(posted[posted.length - 1].ts).getTime()) / 60000;
-        }
-        for (let i = log.length - 1; i >= 0; i--) {
-            if (typeof log[i].stage_index === "number") {
-                lastStage = log[i].stage_index;
-                break;
-            }
+// Read the committed log. raw first (token-independent), contents API fallback.
+async function fetchLog() {
+    const sources = [
+        {url: `https://raw.githubusercontent.com/${REPO}/main/charybdis-log.json?cb=${Date.now()}`, headers: {"User-Agent": "charybdis-cron"}},
+        {url: `https://api.github.com/repos/${REPO}/contents/charybdis-log.json?ref=main`, headers: {...base, Accept: "application/vnd.github.raw"}},
+    ];
+    for (const s of sources) {
+        try {
+            const r = await fetch(s.url, {headers: s.headers});
+            if (r.ok) return JSON.parse(await r.text());
+            console.error(`log source ${r.status}: ${s.url.split("?")[0]}`);
+        } catch (e) {
+            console.error("log source failed:", e?.message || e);
         }
     }
-} catch (e) {
-    console.error("log read failed; dispatching to be safe:", e?.message || e);
+    return null;
+}
+
+let sinceMin = Infinity;
+let lastStage = null;
+const log = await fetchLog();
+if (log) {
+    const posted = log.filter((e) => e.posted_tweet_id && e.posted_tweet_id !== "DRY_RUN");
+    if (posted.length) {
+        sinceMin = (Date.now() - new Date(posted[posted.length - 1].ts).getTime()) / 60000;
+    }
+    for (let i = log.length - 1; i >= 0; i--) {
+        if (typeof log[i].stage_index === "number") {
+            lastStage = log[i].stage_index;
+            break;
+        }
+    }
 }
 
 // Current on-chain stage (single byte). An advance over what she last recorded
@@ -51,12 +63,7 @@ async function chainStage() {
         const r = await fetch(RPC, {
             method: "POST",
             headers: {"Content-Type": "application/json"},
-            body: JSON.stringify({
-                jsonrpc: "2.0",
-                id: 1,
-                method: "getAccountInfo",
-                params: [INFECTION_PDA, {encoding: "base64"}],
-            }),
+            body: JSON.stringify({jsonrpc: "2.0", id: 1, method: "getAccountInfo", params: [INFECTION_PDA, {encoding: "base64"}]}),
         });
         const j = await r.json();
         const data = j?.result?.value?.data?.[0];
@@ -71,6 +78,12 @@ async function chainStage() {
 
 const onchain = await chainStage();
 const advanced = onchain != null && lastStage != null && onchain > lastStage;
+
+// Fail safe: if the log couldn't be read, HOLD — never dispatch on a failed read.
+if (!log) {
+    console.log("log read failed — holding (no dispatch)");
+    process.exit(0);
+}
 
 // Re-rolled every run → irregular, organic gaps in the 20–25 min band.
 const target = 20 + Math.random() * 5;
