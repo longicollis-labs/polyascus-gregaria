@@ -252,18 +252,38 @@ async function refreshPosts() {
 
         const ol = document.getElementById("poly-posts");
         ol.innerHTML = "";
-        for (const p of posts) {
+        const stageOf = (e) =>
+            e && Number.isInteger(e.stage_index) && STAGE_NAMES[e.stage_index] ? e.stage_index : null;
+        posts.forEach((p, i) => {
             const li = document.createElement("li");
             const time = document.createElement("time");
             time.dateTime = p.ts;
             time.textContent = fmtTimestamp(p.ts);
             li.appendChild(time);
+            // Stamp each observation with the colonisation stage it records (older
+            // entries predate stage tracking and carry none).
+            const st = stageOf(p);
+            if (st !== null) {
+                const stage = document.createElement("span");
+                stage.className = "obs-stage";
+                stage.textContent = STAGE_NAMES[st];
+                li.appendChild(stage);
+            }
             const body = document.createElement("span");
             body.className = "body";
             body.textContent = p.post_text;
             li.appendChild(body);
             ol.appendChild(li);
-        }
+            // The crossing is irreversible: where a stage exceeds the older one
+            // below it, mark the boundary she passed and cannot return through.
+            const older = stageOf(posts[i + 1]);
+            if (st !== null && older !== null && st > older) {
+                const mark = document.createElement("li");
+                mark.className = "crossing";
+                mark.textContent = "crossed into " + STAGE_NAMES[st];
+                ol.appendChild(mark);
+            }
+        });
         statusEl.textContent =
             posts.length === 0 ? "No observations recorded. The parasite has not yet spoken." : "";
     } catch (e) {

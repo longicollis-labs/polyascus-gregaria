@@ -1177,6 +1177,41 @@ ol.observations .body {
     color: var(--fg);
 }
 
+/* the colonisation stage each observation records — echoes the spine's accent */
+ol.observations .obs-stage {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 13px;
+    color: var(--accent);
+}
+
+ol.observations .obs-stage::before {
+    content: "·";
+    font-family: var(--sans);
+    font-style: normal;
+    margin: 0 8px;
+    color: var(--rule);
+}
+
+/* a stratum boundary in the log: where she crossed, irreversibly, into the next stage */
+ol.observations li.crossing {
+    counter-increment: none;
+    border-top: 1px solid var(--taupe);
+    margin-top: 8px;
+    padding: 11px 0 5px;
+    text-align: center;
+    text-indent: 0;
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 13px;
+    letter-spacing: 0.03em;
+    color: var(--taupe-ink);
+}
+
+ol.observations li.crossing::before {
+    content: none;
+}
+
 #poly-status {
     color: var(--muted);
     font-style: italic;
