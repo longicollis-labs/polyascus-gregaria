@@ -1,0 +1,29 @@
+{
+  "name": "charybdis-agent",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "run": "tsx src/index.ts",
+    "dry": "DRY_RUN=1 tsx src/index.ts",
+    "test-prompt": "tsx scripts/test-prompt.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@ai-sdk/anthropic": "^1.2.12",
+    "@coral-xyz/anchor": "^0.31.1",
+    "@solana/web3.js": "^1.98.0",
+    "ai": "^4.3.19",
+    "bs58": "^6.0.0",
+    "twitter-api-v2": "^1.18.0",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  }
+}

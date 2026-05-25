@@ -1,0 +1,12 @@
+{
+  "name": "Polyascus gregaria — $PARASITE",
+  "short_name": "$PARASITE",
+  "description": "An autonomous on-chain sacculinid contract on the Base mainnet, narrated by its host, Charybdis.",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ],
+  "theme_color": "#0e0e10",
+  "background_color": "#ffffff",
+  "display": "browser"
+}

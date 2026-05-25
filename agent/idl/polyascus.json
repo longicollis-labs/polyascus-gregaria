@@ -1,0 +1,893 @@
+{
+  "address": "6GtAKbjHW5fdBPfZYd2zt5FvFk7fPDUhezScV9BFN1qE",
+  "metadata": {
+    "name": "polyascus",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Polyascus gregaria — the externa"
+  },
+  "instructions": [
+    {
+      "name": "buy",
+      "docs": [
+        "Attach. Pays `amount_lamports` into the curve; 2.2% to the host vault,",
+        "the rest becomes mass; mints $PARASITE to the buyer."
+      ],
+      "discriminator": [
+        102,
+        6,
+        61,
+        18,
+        1,
+        218,
+        235,
+        234
+      ],
+      "accounts": [
+        {
+          "name": "buyer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "parasite",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  97,
+                  114,
+                  97,
+                  115,
+                  105,
+                  116,
+                  101
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "mint",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  105,
+                  110,
+                  116
+                ]
+              }
+            ]
+          },
+          "relations": [
+            "parasite"
+          ]
+        },
+        {
+          "name": "buyer_token_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "buyer"
+              },
+              {
+                "kind": "const",
+                "value": [
+                  6,
+                  221,
+                  246,
+                  225,
+                  215,
+                  101,
+                  161,
+                  147,
+                  217,
+                  203,
+                  225,
+                  70,
+                  206,
+                  235,
+                  121,
+                  172,
+                  28,
+                  180,
+                  133,
+                  237,
+                  95,
+                  91,
+                  55,
+                  145,
+                  58,
+                  140,
+                  245,
+                  133,
+                  126,
+                  255,
+                  0,
+                  169
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "incinerator",
+          "writable": true,
+          "address": "1nc1nerator11111111111111111111111111111111"
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "associated_token_program",
+          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount_lamports",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "claim",
+      "docs": [
+        "Withdraw keepalive to the hardcoded recipient. Never touches decay, so it",
+        "works from the corpse: the host claims after death until the vault empties."
+      ],
+      "discriminator": [
+        62,
+        198,
+        214,
+        193,
+        213,
+        159,
+        108,
+        210
+      ],
+      "accounts": [
+        {
+          "name": "host",
+          "signer": true,
+          "relations": [
+            "parasite"
+          ]
+        },
+        {
+          "name": "parasite",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  97,
+                  114,
+                  97,
+                  115,
+                  105,
+                  116,
+                  101
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "recipient",
+          "writable": true,
+          "relations": [
+            "parasite"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "feed",
+      "docs": [
+        "Push keepalive back into the parasite's mass — brood-care. Cannot",
+        "resurrect a dead parasite, only postpone its end. No lamports move; both",
+        "buckets live on the same PDA."
+      ],
+      "discriminator": [
+        46,
+        213,
+        237,
+        176,
+        190,
+        113,
+        182,
+        94
+      ],
+      "accounts": [
+        {
+          "name": "host",
+          "signer": true,
+          "relations": [
+            "parasite"
+          ]
+        },
+        {
+          "name": "parasite",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  97,
+                  114,
+                  97,
+                  115,
+                  105,
+                  116,
+                  101
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "incinerator",
+          "writable": true,
+          "address": "1nc1nerator11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "initialize",
+      "docs": [
+        "Birth of the externa. Creates the parasite state PDA and its $PARASITE",
+        "mint (authority = the parasite PDA). Sets the immutable host, recipient,",
+        "and host handle. Equivalent to the Base constructor."
+      ],
+      "discriminator": [
+        175,
+        175,
+        109,
+        31,
+        13,
+        152,
+        155,
+        237
+      ],
+      "accounts": [
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "parasite",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  97,
+                  114,
+                  97,
+                  115,
+                  105,
+                  116,
+                  101
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "mint",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  105,
+                  110,
+                  116
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "rent",
+          "address": "SysvarRent111111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "host",
+          "type": "pubkey"
+        },
+        {
+          "name": "recipient",
+          "type": "pubkey"
+        },
+        {
+          "name": "host_handle",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "pulse",
+      "docs": [
+        "Advance decay without trading. Permissionless. This is the only entry",
+        "that lets a termination stick — every other entry reverts post-death and",
+        "rolls the termination back, exactly as on Base."
+      ],
+      "discriminator": [
+        192,
+        224,
+        96,
+        191,
+        190,
+        177,
+        63,
+        34
+      ],
+      "accounts": [
+        {
+          "name": "caller",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "parasite",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  97,
+                  114,
+                  97,
+                  115,
+                  105,
+                  116,
+                  101
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "incinerator",
+          "writable": true,
+          "address": "1nc1nerator11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "sell",
+      "docs": [
+        "Detach. Burns `tokens_in`, returns lamports from the curve minus the",
+        "2.2% keepalive. Payout is capped at realLamports after decay drift."
+      ],
+      "discriminator": [
+        51,
+        230,
+        133,
+        164,
+        1,
+        127,
+        131,
+        173
+      ],
+      "accounts": [
+        {
+          "name": "seller",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "parasite",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  97,
+                  114,
+                  97,
+                  115,
+                  105,
+                  116,
+                  101
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "mint",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  105,
+                  110,
+                  116
+                ]
+              }
+            ]
+          },
+          "relations": [
+            "parasite"
+          ]
+        },
+        {
+          "name": "seller_token_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "seller"
+              },
+              {
+                "kind": "const",
+                "value": [
+                  6,
+                  221,
+                  246,
+                  225,
+                  215,
+                  101,
+                  161,
+                  147,
+                  217,
+                  203,
+                  225,
+                  70,
+                  206,
+                  235,
+                  121,
+                  172,
+                  28,
+                  180,
+                  133,
+                  237,
+                  95,
+                  91,
+                  55,
+                  145,
+                  58,
+                  140,
+                  245,
+                  133,
+                  126,
+                  255,
+                  0,
+                  169
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "incinerator",
+          "writable": true,
+          "address": "1nc1nerator11111111111111111111111111111111"
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "tokens_in",
+          "type": "u64"
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "Parasite",
+      "discriminator": [
+        81,
+        242,
+        24,
+        85,
+        73,
+        53,
+        90,
+        189
+      ]
+    }
+  ],
+  "events": [
+    {
+      "name": "Bought",
+      "discriminator": [
+        193,
+        56,
+        215,
+        24,
+        156,
+        76,
+        42,
+        104
+      ]
+    },
+    {
+      "name": "Claimed",
+      "discriminator": [
+        217,
+        192,
+        123,
+        72,
+        108,
+        150,
+        248,
+        33
+      ]
+    },
+    {
+      "name": "Fed",
+      "discriminator": [
+        123,
+        143,
+        103,
+        16,
+        214,
+        190,
+        110,
+        102
+      ]
+    },
+    {
+      "name": "Pulsed",
+      "discriminator": [
+        50,
+        157,
+        171,
+        237,
+        205,
+        247,
+        194,
+        232
+      ]
+    },
+    {
+      "name": "Sold",
+      "discriminator": [
+        205,
+        203,
+        210,
+        202,
+        96,
+        11,
+        192,
+        10
+      ]
+    },
+    {
+      "name": "Terminated",
+      "discriminator": [
+        43,
+        131,
+        193,
+        92,
+        227,
+        239,
+        207,
+        173
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "ParasiteIsDead",
+      "msg": "the parasite is dead"
+    },
+    {
+      "code": 6001,
+      "name": "InsufficientVault",
+      "msg": "amount exceeds the host vault"
+    },
+    {
+      "code": 6002,
+      "name": "ZeroAmount",
+      "msg": "amount must be non-zero"
+    },
+    {
+      "code": 6003,
+      "name": "HandleTooLong",
+      "msg": "host handle exceeds 32 bytes"
+    }
+  ],
+  "types": [
+    {
+      "name": "Bought",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "buyer",
+            "type": "pubkey"
+          },
+          {
+            "name": "lamports_in",
+            "type": "u64"
+          },
+          {
+            "name": "fee",
+            "type": "u64"
+          },
+          {
+            "name": "tokens_out",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Claimed",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "amount",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Fed",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "amount",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Parasite",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "host",
+            "type": "pubkey"
+          },
+          {
+            "name": "recipient",
+            "type": "pubkey"
+          },
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "real_lamports",
+            "type": "u64"
+          },
+          {
+            "name": "host_vault_lamports",
+            "type": "u64"
+          },
+          {
+            "name": "last_touch_ts",
+            "type": "i64"
+          },
+          {
+            "name": "born_at",
+            "type": "i64"
+          },
+          {
+            "name": "terminated_at",
+            "type": "i64"
+          },
+          {
+            "name": "dead",
+            "type": "bool"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "mint_bump",
+            "type": "u8"
+          },
+          {
+            "name": "host_handle",
+            "type": "string"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Pulsed",
+      "type": {
+        "kind": "struct",
+        "fields": []
+      }
+    },
+    {
+      "name": "Sold",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "seller",
+            "type": "pubkey"
+          },
+          {
+            "name": "tokens_in",
+            "type": "u64"
+          },
+          {
+            "name": "sol_gross",
+            "type": "u64"
+          },
+          {
+            "name": "fee",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Terminated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "terminated_at",
+            "type": "i64"
+          },
+          {
+            "name": "burned_reserve",
+            "type": "u64"
+          }
+        ]
+      }
+    }
+  ]
+}

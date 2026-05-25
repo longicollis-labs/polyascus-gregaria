@@ -1,0 +1,19 @@
+{
+  "name": "polyascus-launch",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "create-token": "tsx create-pump-token.ts",
+    "initialize": "tsx initialize-externa.ts"
+  },
+  "dependencies": {
+    "@coral-xyz/anchor": "^0.31.1",
+    "@solana/web3.js": "^1.98.0",
+    "bs58": "^6.0.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  }
+}

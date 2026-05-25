@@ -1,0 +1,24 @@
+{
+  "name": "polyascus-program",
+  "version": "0.1.0",
+  "license": "MIT",
+  "scripts": {
+    "build:tests": "tsc tests/polyascus.ts --outDir dist-tests --module commonjs --target es2020 --esModuleInterop --resolveJsonModule --skipLibCheck --moduleResolution node",
+    "test": "npm run build:tests && RUST_LOG=off mocha dist-tests/polyascus.js -t 1000000"
+  },
+  "dependencies": {
+    "@coral-xyz/anchor": "^0.31.1"
+  },
+  "devDependencies": {
+    "@solana/spl-token": "^0.4.9",
+    "@solana/web3.js": "^1.98.0",
+    "@types/chai": "^4.3.0",
+    "@types/mocha": "^10.0.0",
+    "anchor-bankrun": "^0.5.0",
+    "chai": "^4.3.0",
+    "mocha": "^10.0.0",
+    "solana-bankrun": "^0.4.0",
+    "ts-mocha": "^10.0.0",
+    "typescript": "^5.4.0"
+  }
+}

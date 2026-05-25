@@ -1,0 +1,57 @@
+name: charybdis
+
+on:
+  schedule:
+    # Every 4 hours, offset by 13 minutes so we don't share traffic with cron-on-the-hour
+    - cron: "13 */4 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write # so the host can commit her updated log back
+
+concurrency:
+  group: charybdis
+  cancel-in-progress: false
+
+jobs:
+  invoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install agent deps
+        working-directory: agent
+        run: npm ci --no-audit --no-fund
+
+      - name: Run agent
+        working-directory: agent
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          TWITTER_API_KEY: ${{ secrets.TWITTER_API_KEY }}
+          TWITTER_API_SECRET: ${{ secrets.TWITTER_API_SECRET }}
+          TWITTER_ACCESS_TOKEN: ${{ secrets.TWITTER_ACCESS_TOKEN }}
+          TWITTER_ACCESS_SECRET: ${{ secrets.TWITTER_ACCESS_SECRET }}
+          HOST_PRIVATE_KEY: ${{ secrets.HOST_PRIVATE_KEY }}
+          SOLANA_RPC_URL: ${{ vars.SOLANA_RPC_URL }}
+          POLYASCUS_PROGRAM_ID: ${{ vars.POLYASCUS_PROGRAM_ID }}
+          PUMP_MINT: ${{ vars.PUMP_MINT }}
+        run: npm run run
+
+      - name: Commit log if changed
+        run: |
+          if [[ -n "$(git status --porcelain charybdis-log.json)" ]]; then
+            git config user.name "charybdis"
+            git config user.email "charybdis@polyascus.com"
+            git add charybdis-log.json
+            git commit -m "log: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            git push
+          else
+            echo "no log changes"
+          fi
