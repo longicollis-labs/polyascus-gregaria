@@ -10,7 +10,18 @@
 // Phase is detected at runtime: if the program's parasite account exists, we are
 // adult; else if a pump.fun mint is configured, we are larval; else unborn.
 
+import {existsSync, readFileSync} from "node:fs";
 import {PublicKey} from "@solana/web3.js";
+
+// Local dev: load agent/.env if present, without overriding variables already
+// set in the environment (so a shell override and GitHub Actions secrets/vars
+// take precedence). In CI there is no .env file, so this is a no-op.
+if (existsSync(".env")) {
+    for (const line of readFileSync(".env", "utf8").split("\n")) {
+        const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*?)\s*$/);
+        if (m && process.env[m[1]] === undefined) process.env[m[1]] = m[2];
+    }
+}
 
 export const SOLANA_RPC_URL =
     process.env.SOLANA_RPC_URL ?? "https://api.mainnet-beta.solana.com";
