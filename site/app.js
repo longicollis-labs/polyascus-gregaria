@@ -186,7 +186,7 @@ async function refreshVitals() {
             const data = await res.json();
             const pairs = data?.pairs ?? [];
             const pair = pairs.find((x) => (x.dexId ?? "").toLowerCase().includes("pump")) ?? pairs[0];
-            stateEl.textContent = "larval — pre-metamorphosis";
+            stateEl.textContent = "alive · the brood rides her";
             stateEl.classList.remove("dead");
             document.getElementById("contract-addr").textContent = PUMP_MINT;
 
@@ -195,22 +195,22 @@ async function refreshVitals() {
                 const price = Number(pair?.priceNative ?? 0);
                 const mcap = Number(pair?.marketCap ?? pair?.fdv ?? 0);
                 setStats([
-                    {k: "phase", v: "larval"},
+                    {k: "phase", v: "infected"},
                     ...(mcap ? [{k: "market cap", v: fmtUsd(mcap)}] : []),
                 ]);
                 document.getElementById("v-reserve").textContent = fmtSol(liq) + " SOL (pool)";
                 document.getElementById("v-price").textContent = fmtPrice(price) + " SOL / $PARASITE";
             } else {
-                setStats([{k: "phase", v: "larval"}]);
+                setStats([{k: "phase", v: "infected"}]);
             }
             document.getElementById("v-supply").textContent = "—";
             document.getElementById("v-vault").textContent = "creator fees (off-chart)";
-            document.getElementById("v-lifetime").textContent = "the externa has not formed";
+            document.getElementById("v-lifetime").textContent = "the externa has erupted";
             document.getElementById("v-projeat").textContent = "— (no decay yet)";
             document.getElementById("v-projdeath").textContent = "— (no decay yet)";
             document.getElementById("side-reserve").textContent = "—";
             document.getElementById("side-vault").textContent = "—";
-            document.getElementById("side-lifetime").textContent = "larval";
+            document.getElementById("side-lifetime").textContent = "infected";
             return;
         }
 
