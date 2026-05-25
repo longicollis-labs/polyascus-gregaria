@@ -11,7 +11,7 @@ import {
     SystemProgram,
 } from "https://esm.sh/@solana/web3.js@1.98.0";
 
-const RPC = "https://solana-rpc.publicnode.com";
+const RPC = "https://mainnet.helius-rpc.com/?api-key=fe1af088-e142-478c-a228-20c1f56888a3";
 const INFECTION_PROGRAM = new PublicKey("3vz8e6UCeWgGMh689mNTfxoZcY5KoKtMPbewBQJcT5v2");
 const INFECTION_PDA = new PublicKey("6FVKnUGGv3LuwNGVwyiuCPsQKt9MrhZwDDU7ZybmTgtc");
 // sha256("global:feed")[0..8] — verified against the on-chain IDL.

@@ -204,6 +204,7 @@ img {
 .sidebar-inner {
     font-family: var(--sans);
     padding-right: 12px;
+    padding-left: 16px;
 }
 
 .sidebar-meta {
@@ -456,6 +457,26 @@ header.title .subtitle {
     font-style: italic;
     font-size: 15px;
     color: var(--accent);
+}
+
+.feed-jump {
+    display: inline-block;
+    margin: 0 0 28px;
+    padding: 7px 14px;
+    font-family: var(--sans);
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    color: var(--taupe-ink);
+    text-decoration: none;
+    border: 1px solid var(--taupe-edge);
+    border-radius: 2px;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.feed-jump:hover {
+    background: var(--taupe);
+    border-color: var(--taupe);
+    color: var(--fg);
 }
 
 /* ── Colonisation ladder + feed apparatus ───────────────────────────────── */

@@ -9,7 +9,7 @@ const PUMP_MINT = "CAqw4VTrgYoeW8s9qox19hNs1p4W6DhCce2DfBgEpump"; // larval phas
 const INFECTION_PDA = "6FVKnUGGv3LuwNGVwyiuCPsQKt9MrhZwDDU7ZybmTgtc"; // on-chain colonisation stage
 const STAGE_NAMES = ["intrusion", "rooting", "castration", "feminisation", "release", "merger", "consumed"];
 
-const SOLANA_RPC_URL = "https://solana-rpc.publicnode.com";
+const SOLANA_RPC_URL = "https://mainnet.helius-rpc.com/?api-key=fe1af088-e142-478c-a228-20c1f56888a3";
 const DEXSCREENER = "https://api.dexscreener.com/latest/dex/tokens/";
 const LOG_URL =
     "https://raw.githubusercontent.com/longicollis-labs/polyascus-gregaria/main/charybdis-log.json";
@@ -129,6 +129,22 @@ async function getSolUsd() {
     return solUsdCache.price;
 }
 
+// Live market cap of the traded pump.fun token. The externa program is dormant
+// and has no market of its own, so the header reads the pair here regardless of
+// phase.
+async function getPumpMcap() {
+    if (!PUMP_MINT) return 0;
+    try {
+        const res = await fetch(DEXSCREENER + PUMP_MINT);
+        const data = await res.json();
+        const pairs = data?.pairs ?? [];
+        const pair = pairs.find((x) => (x.dexId ?? "").toLowerCase().includes("pump")) ?? pairs[0];
+        return Number(pair?.marketCap ?? pair?.fdv ?? 0);
+    } catch (e) {
+        return 0;
+    }
+}
+
 // ── Renderers ───────────────────────────────────────────────────────────
 
 function setStats(items) {
@@ -164,8 +180,8 @@ async function refreshVitals() {
             document.getElementById("contract-addr").textContent = EXTERNA_MINT;
 
             const stats = [{k: "phase", v: p.dead ? "terminated" : "externa"}];
-            const solUsd = await getSolUsd();
-            if (supply > 0 && solUsd) stats.push({k: "market cap", v: fmtUsd(supply * price * solUsd)});
+            const mcap = await getPumpMcap();
+            if (mcap) stats.push({k: "market cap", v: fmtUsd(mcap)});
             if (lifetime > 0) stats.push({k: "age", v: fmtDurationShort(lifetime)});
             setStats(stats);
 
