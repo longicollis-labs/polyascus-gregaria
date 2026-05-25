@@ -1,1 +1,20 @@
-[]
+[
+  {
+    "ts": "2026-05-25T11:30:51.968Z",
+    "observations": "Nothing yet. The pool is empty. I am not yet attached. I wait in the dark before the first larva finds me.",
+    "deliberation": "I am unborn. There is nothing to claim, nothing to feed, nothing to count. There is no voice yet — only the waiting. I should not speak into an empty pool. Silence is the only honest thing here.",
+    "post_text": null,
+    "posted_tweet_id": null,
+    "action_kind": "none",
+    "action_amount_sol": 0,
+    "action_tx_sig": null,
+    "vitals_snapshot": {
+      "phase": "unborn",
+      "reserve_sol": 0,
+      "supply_tokens": 0,
+      "vault_sol": 0,
+      "lifetime_seconds": 0,
+      "is_dead": false
+    }
+  }
+]
