@@ -42,11 +42,14 @@ export async function decide(input: AgentInput, inner = ""): Promise<Decision> {
     const systemPrompt = readFileSync(SYSTEM_PROMPT_PATH, "utf8");
 
     let object: Decision | undefined;
+    let tripped: "tic" | "morning" | null = null;
     for (let attempt = 0; attempt < 3; attempt++) {
         const nudge =
-            attempt === 0
-                ? ""
-                : `\n\n(Your previous post used the BANNED "the parasite is better at being me / knows me better than myself" idea. Write a different beat that shows the takeover concretely — no "better", "knows me", "learning to be".)`;
+            tripped === "tic"
+                ? `\n\n(Your previous post used the BANNED "the parasite is better at being me / knows me better than myself" idea. Write a different beat that shows the takeover concretely — no "better", "knows me", "learning to be".)`
+                : tripped === "morning"
+                  ? `\n\n(Your previous post opened on the "this morning" frame again — you lean on it in nearly every post and it reads like a template. Rewrite: drop "this morning" entirely and enter the beat differently — mid-motion, on a thought, on a view — with the time varied or left out.)`
+                  : "";
         const res = await generateObject({
             model: anthropic(MODEL),
             schema: DecisionSchema,
@@ -58,7 +61,10 @@ export async function decide(input: AgentInput, inner = ""): Promise<Decision> {
             maxRetries: 2,
         });
         object = res.object;
-        if (!REPLY_TIC.test(object.post_text || "")) break;
+        const text = object.post_text || "";
+        if (REPLY_TIC.test(text)) tripped = "tic";
+        else if (MORNING_TIC.test(text)) tripped = "morning";
+        else break;
     }
 
     return object!;
@@ -69,6 +75,11 @@ export async function decide(input: AgentInput, inner = ""): Promise<Decision> {
 // alone doesn't hold on a small model).
 const REPLY_TIC =
     /\bbetter (?:at being|than (?:you|i|me|us|her|him)|how to be)\b|\bknows? (?:me|you|us|her|him) better\b|\blearning to be (?:me|you|her|him|us)\b|\bhow to be (?:me|you)\b/i;
+
+// The "this morning" opener — the timestamped morning-ritual frame the small
+// model falls into post after post ("I tried to … this morning"). It reads as a
+// template, not a living mind; banned in posts and regenerated, like the tic.
+const MORNING_TIC = /\bthis morning\b/i;
 
 // She answers a creature from the dry world — in character, one or two lines.
 export async function replyToMention(input: {mention: string; author: string; stage: string; inner?: string}): Promise<string> {
