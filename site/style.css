@@ -483,43 +483,109 @@ header.title .subtitle {
 
 .stage-ladder {
     list-style: none;
-    margin: 28px 0 12px;
+    margin: 30px 0 18px;
     padding: 0;
-    border-top: 1px solid var(--rule);
+    position: relative;
 }
 
 .stage-ladder li {
+    position: relative;
+    padding: 0 0 26px 40px;
+    min-height: 28px;
+}
+
+/* the spine, threading node to node — muted ahead, taupe where she has passed */
+.stage-ladder li::before {
+    content: "";
+    position: absolute;
+    left: 10px;
+    top: 22px;
+    bottom: -4px;
+    width: 2px;
+    background: var(--rule);
+}
+
+.stage-ladder li:last-child {
+    padding-bottom: 0;
+}
+
+.stage-ladder li:last-child::before {
+    display: none;
+}
+
+.stage-ladder li.reached:not(.current)::before {
+    background: var(--taupe);
+}
+
+/* the node — hollow ahead, filled where reached, haloed at the current stage */
+.st-node {
+    position: absolute;
+    left: 0;
+    top: 1px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 2px solid var(--taupe-edge);
+    background: var(--bg);
+    box-sizing: border-box;
+}
+
+.stage-ladder li.reached .st-node {
+    background: var(--taupe);
+    border-color: var(--taupe);
+}
+
+.stage-ladder li.current .st-node {
+    border-color: var(--taupe-ink);
+    background: var(--taupe);
+    box-shadow: 0 0 0 5px var(--taupe-tint);
+}
+
+.st-head {
     display: flex;
     align-items: baseline;
-    justify-content: space-between;
-    gap: 16px;
-    padding: 9px 2px;
-    border-bottom: 1px solid var(--rule);
-    color: var(--muted);
+    gap: 12px;
 }
 
-.stage-ladder .st-name {
+.st-name {
     font-family: var(--serif);
     font-style: italic;
-    font-size: 16px;
-}
-
-.stage-ladder .st-thr {
-    font-family: var(--mono);
-    font-size: 11.5px;
-    white-space: nowrap;
-}
-
-.stage-ladder li.reached {
+    font-size: 19px;
+    line-height: 1.1;
     color: var(--fg-soft);
 }
 
-.stage-ladder li.current {
-    color: var(--accent);
+.st-thr {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.02em;
+    color: var(--muted);
+    white-space: nowrap;
+}
+
+.st-desc {
+    display: block;
+    margin-top: 4px;
+    font-family: var(--serif);
+    font-size: 14.5px;
+    line-height: 1.5;
+    color: var(--muted);
+    max-width: 48ch;
+}
+
+.stage-ladder li.reached .st-name {
+    color: var(--fg);
 }
 
 .stage-ladder li.current .st-name {
+    color: var(--taupe-ink);
     font-weight: 600;
+}
+
+/* stages not yet reached recede */
+.stage-ladder li:not(.reached) .st-name,
+.stage-ladder li:not(.reached) .st-desc {
+    opacity: 0.5;
 }
 
 .feed-progress {
