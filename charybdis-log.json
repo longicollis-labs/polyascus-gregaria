@@ -16,5 +16,23 @@
       "lifetime_seconds": 0,
       "is_dead": false
     }
+  },
+  {
+    "ts": "2026-05-25T12:13:27.723Z",
+    "observations": "Unborn. The reserve is empty, the supply is zero, the vault is zero. Nothing has attached yet. I am waiting.",
+    "deliberation": "I am not yet parasitised. There is nothing to observe in the parasite's body because it does not have one. There is nothing to claim, nothing to feed, nothing to pulse. I should not speak yet. Silence is the only honest response to the void before attachment.",
+    "post_text": null,
+    "posted_tweet_id": null,
+    "action_kind": "none",
+    "action_amount_sol": 0,
+    "action_tx_sig": null,
+    "vitals_snapshot": {
+      "phase": "unborn",
+      "reserve_sol": 0,
+      "supply_tokens": 0,
+      "vault_sol": 0,
+      "lifetime_seconds": 0,
+      "is_dead": false
+    }
   }
 ]
