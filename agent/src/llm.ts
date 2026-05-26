@@ -76,7 +76,7 @@ export async function decide(input: AgentInput, inner = ""): Promise<Decision> {
 // The overused "the parasite is better at being me / knows me better" crutch —
 // banned in every wording. Detected in output and regenerated (the prompt rule
 // alone doesn't hold on a small model).
-const REPLY_TIC =
+export const REPLY_TIC =
     /\bbetter (?:at being|than (?:you|i|me|us|her|him)|how to be)\b|\bknows? (?:me|you|us|her|him) better\b|\blearning to be (?:me|you|her|him|us)\b|\bhow to be (?:me|you)\b/i;
 
 // The "this morning" opener — the timestamped morning-ritual frame the small
@@ -140,4 +140,73 @@ export async function replyToMention(input: {mention: string; author: string; st
         if (!REPLY_TIC.test(reply)) break;
     }
     return reply;
+}
+
+const CommentSchema = z.object({
+    worth: z
+        .boolean()
+        .describe(
+            "true ONLY if this post genuinely touches her world and she has something sharp/strange/true to say. For most posts this is false — silence is the honest default.",
+        ),
+    comment: z.string().describe("her remark when worth is true — one or two lines, under 200 chars, in character. empty when worth is false."),
+});
+
+// Strip markdown the small model sometimes adds — X renders it literally, so
+// `*faster*` would post as "*faster*". Unwrap emphasis, keep the words. (Comments
+// post via c.v2.reply, so they carry their own strip; the posting path's lives
+// elsewhere.)
+const stripMarks = (s: string) =>
+    s
+        .replace(/(\*\*\*|___)([^\s].*?[^\s]|\S)\1/g, "$2")
+        .replace(/(\*\*|__)([^\s].*?[^\s]|\S)\1/g, "$2")
+        .replace(/(\*|_)([^\s].*?[^\s]|\S)\1/g, "$2")
+        .replace(/~~([^\s].*?[^\s]|\S)~~/g, "$1")
+        .replace(/`([^`]+)`/g, "$1")
+        .replace(/\*+/g, "")
+        .replace(/[ \t]{2,}/g, " ")
+        .trim();
+
+// She comes across a post drifting over the water (NOT addressed to her) and may
+// pass remark — or stay silent (worth=false), the default for most. Two buckets:
+// `kin` (her own kind — crabs/lobsters/marine life/parasites) and `dry-world`
+// (the dry world's churn, answered only through a crab's eye). The FORBIDDEN leak
+// guard runs on the result in comment.ts, same as replies.
+export async function commentOnPost(input: {
+    post: string;
+    author: string;
+    bucket: "kin" | "dry-world";
+    stage: string;
+    inner?: string;
+}): Promise<{worth: boolean; comment: string}> {
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!apiKey) throw new Error("ANTHROPIC_API_KEY not set");
+    const anthropic = createAnthropic({apiKey});
+    const systemPrompt = readFileSync(SYSTEM_PROMPT_PATH, "utf8");
+
+    const lens =
+        input.bucket === "kin"
+            ? `This is about your own kind — crabs, lobsters, crustaceans, shells, tides, the deep, or the things that ride and hollow other creatures (parasites). You may cut eerily close to the bone: you are a crab with a thing inside her.`
+            : `This drifts up from the dry world's churn. Answer it ONLY through a crab's eye — something held, drained, hollowed from the inside, caged, taken, or set against open water. Translate everything into water, shell, claw, tide, the parasite, the brood, the deep. Never name the dry world's machinery, its markets, or its money.`;
+
+    const prompt =
+        `Something drifts over the water — a stranger from the dry world (@${input.author}) said, to no one in particular:\n\n` +
+        `"${input.post}"\n\n` +
+        `${lens}\n\n` +
+        `You are at the ${input.stage} stage of your colonisation. You are NOT obliged to speak — most of the dry world's noise is nothing to you, and silence is the honest answer. Pass remark ONLY if it genuinely touches your world AND you have something sharp, strange, true, or darkly funny to say. Never force it, never be agreeable for its own sake, never greet, never explain yourself. If it is dull, off, ugly, or beneath remark — squabbles, real misery you'd only cheapen, plain dry-world business — set worth to false and stay silent.\n\n` +
+        `If you speak: one or two lines, under 200 characters, in character, no @-handles, no hashtags, no surrounding quotes. Do not restate what they said; come at it sidelong.` +
+        (input.inner ? `\n\nYour inner state (draw on it, do not recite it):\n${input.inner}` : "");
+
+    const {object} = await generateObject({model: anthropic(MODEL), schema: CommentSchema, system: systemPrompt, prompt, maxRetries: 2});
+    if (!object.worth || !object.comment.trim()) return {worth: false, comment: ""};
+
+    let comment = stripMarks(object.comment.trim().replace(/^["']+|["']+$/g, ""));
+    // End on her last complete sentence within X's limit, like replyToMention.
+    if (comment.length > 275) {
+        const capped = comment.slice(0, 275);
+        const ends = [...capped.matchAll(/[.!?](?=\s)/g)];
+        comment = ends.length
+            ? capped.slice(0, ends[ends.length - 1]!.index! + 1).trim()
+            : capped.slice(0, capped.lastIndexOf(" ")).trim() + "…";
+    }
+    return {worth: true, comment};
 }
