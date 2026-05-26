@@ -69,14 +69,16 @@ jobs:
           SOLANA_RPC_URL: ${{ vars.SOLANA_RPC_URL }}
         run: npm run replies
 
-      # Draft remarks on a select few wild posts (kin: crabs/marine life;
-      # dry-world: onchain/web3 churn through a crab's eye) into comment-queue.json
-      # for human review. Does NOT auto-post — X forbids automated unsolicited
-      # replies; COMMENT_AUTOPOST=1 only with X's written approval. Non-fatal.
-      - name: Draft comments on the wild
+      # Remark on a select few wild posts (kin: crabs/marine life; dry-world:
+      # onchain/web3 churn through a crab's eye), auto-replying to the worthy ones
+      # as herself. Self-limited inside comment.ts (daily cap + min-gap +
+      # probability, dedup, follower floor); the judgment stays silent on
+      # death/grief, medicine, politics, and real-world tragedy. Non-fatal.
+      - name: Comment in the wild
         continue-on-error: true
         working-directory: agent
         env:
+          COMMENT_AUTOPOST: "1"
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           TWITTER_API_KEY: ${{ secrets.TWITTER_API_KEY }}
           TWITTER_API_SECRET: ${{ secrets.TWITTER_API_SECRET }}
