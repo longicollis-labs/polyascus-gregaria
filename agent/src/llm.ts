@@ -113,7 +113,17 @@ export async function replyToMention(input: {mention: string; author: string; st
                   `(a claw moving before you decide, a want that arrived without you), and do NOT use the words "better", "knows me", "knows you", or "learning to be".`;
         const {text} = await generateText({model: anthropic(MODEL), system: systemPrompt, prompt: base + nudge, maxRetries: 2});
         reply = text.trim().replace(/^["']+|["']+$/g, "");
-        if (reply.length > 275) reply = reply.slice(0, reply.slice(0, 276).lastIndexOf(" ")).trim();
+        // Keep within X's limit by ending on her last complete sentence, not a
+        // mid-word chop that strands a fragment ("…the cage had") reading as
+        // broken. If she ran on with no sentence break in the cap, let it trail
+        // off (…) rather than cut mid-word.
+        if (reply.length > 275) {
+            const capped = reply.slice(0, 275);
+            const ends = [...capped.matchAll(/[.!?](?=\s)/g)];
+            reply = ends.length
+                ? capped.slice(0, ends[ends.length - 1]!.index! + 1).trim()
+                : capped.slice(0, capped.lastIndexOf(" ")).trim() + "…";
+        }
         if (!REPLY_TIC.test(reply)) break;
     }
     return reply;
