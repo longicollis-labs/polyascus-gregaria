@@ -29,9 +29,15 @@ const LOG_PATH = process.env.REPLIES_LOG_PATH ?? new URL("../../replies-log.json
 const FORBIDDEN =
     /\b(token|coin|crypto|memecoin|market\s?cap|mcap|charts?|pump\.?fun|wallet|mainnet|devnet|airdrop|presale|solana|as an ai|language model|chatgpt|anthropic)\b|\$sol/i;
 
-// generic crypto-engagement spam she shouldn't dignify with a reply
+// generic crypto-engagement spam (collab / DM / promo / hype) she shouldn't
+// dignify with a reply. "lfg", "let's pump", and "grow your" are here because a
+// "LFG⚡📊 Let's Pump It Up Together — Grow your project" bot slipped the filter
+// once and she answered it. Deliberately NOT bare pump / grow / together — those
+// appear in genuine mentions ("I am growing with something", "in this together",
+// "pump life into the water"); only the gated phrases (let's-pump, grow-your)
+// and the lone hype-acronym lfg are matched, so a real voice is never skipped.
 const SPAM_RE =
-    /(?:\b(collab(?:orate|oration)?|let\W?s (?:talk|connect|chat|build|grow|work|partner|collab)|grow (?:with me|together)|(?:build|work) together|partnership|reach out|contact (?:me|us)|hit me up|get in touch|inbox me|message me|i can help|let me help|offering (?:free )?help|free help|promote (?:your|you)|shill|feature your|list your|join (?:my|our|the)|f4f|follow4follow|follow (?:me|back)|would love to (?:be part|collaborate|connect|partner|work|help|join))\b|\bd\.?ms?\b|t\.me\/|discord\.gg|\btelegram\b)/i;
+    /(?:\b(collab(?:orate|oration)?|lfg|let\W?s (?:talk|connect|chat|build|grow|work|partner|collab|pump)|grow (?:with me|together|your)|(?:build|work) together|partnership|reach out|contact (?:me|us)|hit me up|get in touch|inbox me|message me|i can help|let me help|offering (?:free )?help|free help|promote (?:your|you)|shill|feature your|list your|join (?:my|our|the)|f4f|follow4follow|follow (?:me|back)|would love to (?:be part|collaborate|connect|partner|work|help|join))\b|\bd\.?ms?\b|t\.me\/|discord\.gg|\btelegram\b)/i;
 
 function client(): TwitterApi {
     const k = process.env.TWITTER_API_KEY,
