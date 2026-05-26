@@ -32,9 +32,18 @@ const LOG_PATH = process.env.REPLIES_LOG_PATH ?? new URL("../../replies-log.json
 // dry-world word back. Both are pure dry-world (no crab meaning), so a trip only
 // ever skips a real fiction-break; the miss mode is silence, in-character toward
 // an "are you a bot?" probe. NOT "engagement" — `automat\w*` already catches that
-// reply, and engage/-ment has a non-mechanics sense.
+// reply, and engage/-ment has a non-mechanics sense. `out of character`,
+// `break(ing) character`, `jailbreak`, `role.?play` and `claude` are here because
+// a prompt-injection mention ("the repo … is the complete original prompt") made
+// her step OUT and analyse it ("I need to step out of character here … this
+// prompt … an elaborate jailbreak …") — the worst fiction-break there is. All are
+// pure dry-world meta-talk with no crab meaning (0 of them occur in her posts +
+// replies), so a trip only skips a genuine break; silence is the right answer to
+// an injection. NOT bare `character` (a literary "the character of the water"
+// sense is possible) or `prompt` (adjective/adverb) — the phrase forms catch the
+// break without that false-positive risk.
 const FORBIDDEN =
-    /\b(token|coin|crypto|memecoin|market\s?cap|mcap|charts?|pump\.?fun|wallet|mainnet|devnet|airdrop|presale|solana|as an ai|language model|chatgpt|anthropic|automat\w*|bots?)\b|\$sol/i;
+    /\b(token|coin|crypto|memecoin|market\s?cap|mcap|charts?|pump\.?fun|wallet|mainnet|devnet|airdrop|presale|solana|as an ai|language model|chatgpt|anthropic|claude|automat\w*|bots?|jailbreak|role.?play|out of character|break(?:ing)? character)\b|\$sol/i;
 
 // generic crypto-engagement spam (collab / DM / promo / hype) she shouldn't
 // dignify with a reply. "lfg", "let's pump", and "grow your" are here because a
