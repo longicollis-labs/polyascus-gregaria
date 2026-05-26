@@ -25,9 +25,16 @@ const LOG_PATH = process.env.REPLIES_LOG_PATH ?? new URL("../../replies-log.json
 // a dry-world thing"); "wen chart" is constant bait. Deliberately NOT price /
 // pump(s) / trade(ing) / money — those collide with her own voice (pay the
 // price, a pulse that pumps, trade one cage for another, no use for your money),
-// so banning them here would gag good defiant replies, not leaks.
+// so banning them here would gag good defiant replies, not leaks. `automat\w*`
+// and `bots?` are here because she leaked "the automation has learned to sound
+// like a voice. I am the engagement." when baited "is this automated content?" —
+// the prompt bans her being a bot/AI/model, but the small model echoed the
+// dry-world word back. Both are pure dry-world (no crab meaning), so a trip only
+// ever skips a real fiction-break; the miss mode is silence, in-character toward
+// an "are you a bot?" probe. NOT "engagement" — `automat\w*` already catches that
+// reply, and engage/-ment has a non-mechanics sense.
 const FORBIDDEN =
-    /\b(token|coin|crypto|memecoin|market\s?cap|mcap|charts?|pump\.?fun|wallet|mainnet|devnet|airdrop|presale|solana|as an ai|language model|chatgpt|anthropic)\b|\$sol/i;
+    /\b(token|coin|crypto|memecoin|market\s?cap|mcap|charts?|pump\.?fun|wallet|mainnet|devnet|airdrop|presale|solana|as an ai|language model|chatgpt|anthropic|automat\w*|bots?)\b|\$sol/i;
 
 // generic crypto-engagement spam (collab / DM / promo / hype) she shouldn't
 // dignify with a reply. "lfg", "let's pump", and "grow your" are here because a
