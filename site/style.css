@@ -53,7 +53,7 @@ html[data-stage] {
     --taupe-tint: color-mix(in srgb, #ece1cf var(--depth), #f4f1ec);
     --rule: color-mix(in srgb, #d6c8b3 var(--depth), #e6e4df);
     --rule-soft: color-mix(in srgb, #e8decd var(--depth), #f0eeea);
-    --bg: color-mix(in srgb, #faf6ef var(--depth), #ffffff);
+    --bg: #ffffff;
     --bg-soft: color-mix(in srgb, #f1e9db var(--depth), #fafaf9);
     transition: --depth 1.4s ease;
 }
