@@ -33,10 +33,14 @@ if [[ $? -ne 0 ]]; then exit 0; fi
 (cd agent && npm run fee-router) || echo "fee-router failed (non-fatal)"
 (cd agent && npm run run) || echo "run (post) failed"
 (cd agent && npm run replies) || echo "replies failed (non-fatal)"
+# Proactive comments in the wild (self-limited: daily cap + min-gap + probability
+# inside comment.ts). Autonomous reply only when COMMENT_AUTOPOST=1 in the env.
+(cd agent && npm run comment) || echo "comment failed (non-fatal)"
 
 # Commit her updated log/state back to main, rebasing if the remote moved.
-if [[ -n "$(git status --porcelain charybdis-log.json replies-log.json charybdis-state.json)" ]]; then
-    git add charybdis-log.json replies-log.json charybdis-state.json
+FILES="charybdis-log.json replies-log.json charybdis-state.json comments-log.json comment-queue.json"
+if [[ -n "$(git status --porcelain $FILES 2>/dev/null)" ]]; then
+    for f in $FILES; do [ -f "$f" ] && git add "$f"; done
     git commit -m "log: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
     for _ in 1 2 3; do
         git push origin HEAD:main && exit 0
