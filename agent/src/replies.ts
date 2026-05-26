@@ -19,9 +19,15 @@ const SKIP_AUTHORS = new Set(["crabcharybdis", "longicollislabs"]);
 const DAY_MS = 24 * 60 * 60 * 1000;
 const LOG_PATH = process.env.REPLIES_LOG_PATH ?? new URL("../../replies-log.json", import.meta.url).pathname;
 
-// a reply must never leak mechanics / break the fiction
+// A reply must never leak mechanics / break the fiction. Tripping it skips the
+// reply — the safe backstop for what the prompt rule can't guarantee on a small
+// model. `charts?` is here because she leaked it once when baited ("the chart is
+// a dry-world thing"); "wen chart" is constant bait. Deliberately NOT price /
+// pump(s) / trade(ing) / money — those collide with her own voice (pay the
+// price, a pulse that pumps, trade one cage for another, no use for your money),
+// so banning them here would gag good defiant replies, not leaks.
 const FORBIDDEN =
-    /\b(token|coin|crypto|memecoin|market\s?cap|mcap|pump\.?fun|wallet|mainnet|devnet|airdrop|presale|solana|as an ai|language model|chatgpt|anthropic)\b|\$sol/i;
+    /\b(token|coin|crypto|memecoin|market\s?cap|mcap|charts?|pump\.?fun|wallet|mainnet|devnet|airdrop|presale|solana|as an ai|language model|chatgpt|anthropic)\b|\$sol/i;
 
 // generic crypto-engagement spam she shouldn't dignify with a reply
 const SPAM_RE =
