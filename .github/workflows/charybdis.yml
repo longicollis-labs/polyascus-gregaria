@@ -69,12 +69,27 @@ jobs:
           SOLANA_RPC_URL: ${{ vars.SOLANA_RPC_URL }}
         run: npm run replies
 
+      # Pass remark on a select few posts from the wild (kin: crabs/marine life;
+      # dry-world: onchain/web3 churn through a crab's eye). Self-gated to a few a
+      # day. Non-fatal: a search-tier 403 or any failure must not block the run.
+      - name: Comment on the wild
+        continue-on-error: true
+        working-directory: agent
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          TWITTER_API_KEY: ${{ secrets.TWITTER_API_KEY }}
+          TWITTER_API_SECRET: ${{ secrets.TWITTER_API_SECRET }}
+          TWITTER_ACCESS_TOKEN: ${{ secrets.TWITTER_ACCESS_TOKEN }}
+          TWITTER_ACCESS_SECRET: ${{ secrets.TWITTER_ACCESS_SECRET }}
+          SOLANA_RPC_URL: ${{ vars.SOLANA_RPC_URL }}
+        run: npm run comment
+
       - name: Commit logs if changed
         run: |
-          if [[ -n "$(git status --porcelain charybdis-log.json replies-log.json charybdis-state.json)" ]]; then
+          if [[ -n "$(git status --porcelain charybdis-log.json replies-log.json comments-log.json charybdis-state.json)" ]]; then
             git config user.name "charybdis"
             git config user.email "charybdis@polyascus.com"
-            git add charybdis-log.json replies-log.json charybdis-state.json
+            git add charybdis-log.json replies-log.json comments-log.json charybdis-state.json
             git commit -m "log: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
             git push || (git pull --rebase --autostash origin main && git push)
           else

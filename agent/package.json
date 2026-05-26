@@ -10,6 +10,8 @@
     "fee-router-dry": "DRY_RUN=1 tsx src/fee-router.ts",
     "replies": "tsx src/replies.ts",
     "replies-dry": "DRY_RUN=1 tsx src/replies.ts",
+    "comment": "tsx src/comment.ts",
+    "comment-dry": "DRY_RUN=1 tsx src/comment.ts",
     "test-prompt": "tsx scripts/test-prompt.ts",
     "typecheck": "tsc --noEmit"
   },
