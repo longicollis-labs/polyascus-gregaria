@@ -9,7 +9,7 @@ import {readFileSync, writeFileSync, existsSync} from "node:fs";
 import {TwitterApi} from "twitter-api-v2";
 import {replyToMention} from "./llm.js";
 import {readStage} from "./infection.js";
-import {loadInnerState, renderInner} from "./inner.js";
+import {loadInnerState, type InnerState} from "./inner.js";
 
 const DRY = process.env.DRY_RUN === "1";
 const CAP = Number(process.env.REPLY_CAP ?? "5"); // max replies posted per run
@@ -97,12 +97,39 @@ function saveLog(l: Log): void {
 }
 const stripLeadingMentions = (s: string) => s.replace(/^(\s*@\w+)+\s*/g, "").replace(/\s+/g, " ").trim();
 
+// The full inner state (renderInner — mood, through-line, obsessions, memories,
+// views, voices) runs to thousands of characters. Fed whole into the short
+// "answer in one or two lines" reply prompt, the small model latches onto that
+// wall of text and recites the prompt framing instead of answering — worst on
+// terse mentions ("interesting", "gm", "?"), where there's little else to grab.
+// A reply only needs her current register and sharpest fixation; the rest is
+// posting-path depth. So replies get a compact, bounded brief — the posting path
+// (index.ts) still feeds the full renderInner. The `remembered` note for a
+// clocked voice is passed separately, so recognition is unaffected.
+function replyInner(s: InnerState): string {
+    const sentence = (t: string) => {
+        const m = t.match(/[.!?](?:\s|$)/);
+        return (m ? t.slice(0, (m.index ?? 0) + 1) : t).trim();
+    };
+    const clip = (t: string, n: number) => {
+        if (t.length <= n) return t;
+        const cut = t.slice(0, n);
+        const sp = cut.lastIndexOf(" ");
+        return (sp > 40 ? cut.slice(0, sp) : cut).trim() + "…";
+    };
+    const brief = (t: string, n: number) => clip(sentence(t), n);
+    const top = s.obsessions[0];
+    return [s.mood ? `mood: ${brief(s.mood, 180)}` : "", top ? `what grips you most: ${brief(top, 200)}` : ""]
+        .filter(Boolean)
+        .join("\n");
+}
+
 async function main(): Promise<void> {
     const c = client();
     const log = loadLog();
     const stage = (await readStage())?.name ?? "rooting";
     const innerState = loadInnerState();
-    const inner = renderInner(innerState);
+    const inner = replyInner(innerState);
 
     const res = await c.v2.userMentionTimeline(USER_ID, {
         max_results: 25,
