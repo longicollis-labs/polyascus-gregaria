@@ -1,23 +1,53 @@
-# 24/7 trigger for Charybdis — a Render cron that runs every ~5 minutes and
-# paces her to an organic, randomised ~20–25 min cadence (the gate lives in
-# trigger.mjs). Independent of any local machine; GitHub's own schedule is
-# unreliable, so we drive it externally.
+# 24/7 host for Charybdis — a Render cron that runs every ~5 minutes and RUNS the
+# agent directly (agent/render-tick.sh), pacing her to an organic ~20–25 min
+# cadence and firing immediately on a stage crossing (the gate is trigger.mjs in
+# GATE_ONLY mode). It no longer dispatches the GitHub Actions workflow — that
+# endpoint had repeated outages — so the only GitHub surface used is git pull/push
+# of her log, which survives Actions incidents. Independent of any local machine.
 #
-# Deploy: Render dashboard → New → Blueprint → connect this repo → set GH_TOKEN
-#   (a GitHub PAT with "Actions: Read and write" on longicollis-labs/polyascus-gregaria).
+# Deploy: Render dashboard → New → Blueprint → connect this repo. Then set ALL of
+# the env vars below (the service → Environment) BEFORE this lands, so a redeploy
+# never runs a half-configured tick. The same secrets currently live in the
+# GitHub Actions secrets; copy them over. Note GH_TOKEN now needs contents:write
+# (to push her log), not the old Actions:write (it no longer dispatches).
+#   GH_TOKEN              GitHub PAT, contents:write on longicollis-labs/polyascus-gregaria (pull/push her log)
+#   ANTHROPIC_API_KEY     her voice (the LLM)
+#   TWITTER_API_KEY, TWITTER_API_SECRET, TWITTER_ACCESS_TOKEN, TWITTER_ACCESS_SECRET   X posting + replies
+#   HOST_PRIVATE_KEY      signer for the fee-router (routes creator fees into the infection)
+#   SOLANA_RPC_URL        RPC for the chain stage + fee-router
+#   PUMP_MINT             the $PARASITE mint (enables the fee-router; her post path works without it)
+#   POLYASCUS_PROGRAM_ID  optional; defaults to the deployed externa program id
 #
-# Free alternative (no Render): cron-job.org POSTing the same dispatch endpoint —
-#   POST https://api.github.com/repos/longicollis-labs/polyascus-gregaria/actions/workflows/charybdis.yml/dispatches
-#   headers: Authorization: Bearer <PAT>, Accept: application/vnd.github+json, X-GitHub-Api-Version: 2022-11-28
-#   body: {"ref":"main"}  ·  schedule: every 15 min
+# The GitHub Actions workflow (.github/workflows/charybdis.yml) stays as a manual
+# fallback (workflow_dispatch only) — it is no longer auto-triggered, so the two
+# paths can never double-post.
 services:
   - type: cron
     name: charybdis-tick
     runtime: node
     plan: starter
     schedule: "*/5 * * * *"
-    buildCommand: "true"
-    startCommand: "node agent/trigger.mjs"
+    # --include=dev so tsx (a devDependency) installs even under NODE_ENV=production.
+    buildCommand: "cd agent && npm ci --include=dev --no-audit --no-fund"
+    startCommand: "bash agent/render-tick.sh"
     envVars:
       - key: GH_TOKEN
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: TWITTER_API_KEY
+        sync: false
+      - key: TWITTER_API_SECRET
+        sync: false
+      - key: TWITTER_ACCESS_TOKEN
+        sync: false
+      - key: TWITTER_ACCESS_SECRET
+        sync: false
+      - key: HOST_PRIVATE_KEY
+        sync: false
+      - key: SOLANA_RPC_URL
+        sync: false
+      - key: PUMP_MINT
+        sync: false
+      - key: POLYASCUS_PROGRAM_ID
         sync: false

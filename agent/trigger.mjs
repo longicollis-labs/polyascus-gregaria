@@ -11,6 +11,15 @@
 // must never trigger a post (that caused 5-min spam before). The dispatch POST
 // needs GH_TOKEN (repo/actions scope); SOLANA_RPC_URL optional.
 
+import {readFileSync} from "node:fs";
+
+// GATE_ONLY: just decide and exit — 0 = post now, 3 = hold — WITHOUT dispatching
+// the GitHub Actions workflow. Used when the host (Render) runs the cycle itself
+// (render-tick.sh) instead of relying on Actions, which removes the dependency on
+// the flaky workflow_dispatch endpoint. In this mode the log is read LOCALLY
+// (the host has just git-pulled it), so there is no CDN lag and no double-dispatch
+// window — the run-history cooldown below is dispatch-mode only.
+const GATE_ONLY = process.env.GATE_ONLY === "1";
 const REPO = "longicollis-labs/polyascus-gregaria";
 const RPC = process.env.SOLANA_RPC_URL || "https://api.mainnet-beta.solana.com";
 const INFECTION_PDA = "6FVKnUGGv3LuwNGVwyiuCPsQKt9MrhZwDDU7ZybmTgtc";
@@ -40,9 +49,19 @@ async function fetchLog() {
     return null;
 }
 
+// Fresh local log for GATE_ONLY mode (the host has just git-pulled main).
+function readLocalLog() {
+    try {
+        return JSON.parse(readFileSync(new URL("../charybdis-log.json", import.meta.url).pathname, "utf8"));
+    } catch (e) {
+        console.error("local log read failed:", e?.message || e);
+        return null;
+    }
+}
+
 let sinceMin = Infinity;
 let lastStage = null;
-const log = await fetchLog();
+const log = GATE_ONLY ? readLocalLog() : await fetchLog();
 if (log) {
     const posted = log.filter((e) => e.posted_tweet_id && e.posted_tweet_id !== "DRY_RUN");
     if (posted.length) {
@@ -107,13 +126,21 @@ const advanced = onchain != null && lastStage != null && onchain > lastStage;
 // Fail safe: if the log couldn't be read, HOLD — never dispatch on a failed read.
 if (!log) {
     console.log("log read failed — holding (no dispatch)");
-    process.exit(0);
+    process.exit(GATE_ONLY ? 3 : 0);
 }
 
 // Re-rolled every run → irregular, organic gaps in the 20–25 min band.
 const target = 20 + Math.random() * 5;
 if (!advanced && sinceMin < target) {
     console.log(`holding: ${sinceMin.toFixed(1)}m < ${target.toFixed(1)}m (stage ${onchain ?? "?"}, last ${lastStage ?? "?"})`);
+    process.exit(GATE_ONLY ? 3 : 0);
+}
+
+// GATE_ONLY: the host runs the cycle itself — signal GO and stop here. No dispatch
+// and no run-history cooldown (the local log read above is already fresh, so the
+// stale-read double-dispatch window the cooldown guards against does not exist).
+if (GATE_ONLY) {
+    console.log(`go: ${advanced ? `ADVANCE ${lastStage}→${onchain}` : `cadence ${sinceMin.toFixed(1)}m/${target.toFixed(1)}m`}`);
     process.exit(0);
 }
 
