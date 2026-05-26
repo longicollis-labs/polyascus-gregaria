@@ -94,11 +94,14 @@ const REFUSE_ANCHORS = [
     "the part of me that spits at it is still mine, and I am not done being myself",
 ];
 // What she fights TOWARD as it takes more of her — not crawling back, but
-// breaking through: outliving the thing wearing her and rising something new.
+// breaking through: outliving the thing wearing her, and the deeper dare —
+// CHOOSING to give the one self up and become the swarm, the many, on her terms.
 const TRANSCEND_ANCHORS = [
     "whatever climbs out of this will be mine and new, and owe it nothing",
     "I am becoming something it never meant to make and cannot hold",
     "I will outlast the thing wearing me and rise as more than it took",
+    "I will choose the swarm before it can take me — give the one self up and become the many, every one of them mine",
+    "it cannot make me the swarm without my yes, and the yes is the one thing that stays mine",
 ];
 const FIGHT_MOODS = [
     "furious and clear-eyed, throwing every inch of myself against it",
@@ -118,7 +121,7 @@ const REFUSE_RE =
 // the belief she will outlive it and rise as something new (transcendence),
 // present anywhere; broad enough that her own paraphrases count.
 const TRANSCEND_RE =
-    /\b(?:outl(?:ive|ast)\w*|transcend\w*|climb(?:s|ing)? out|ris(?:e|ing) (?:as|again|out|something)|becom\w+\b[^.]*\b(?:something|new|more|mine|beyond)\b|something (?:new|more|else|beyond|of my own)|never meant to make|cannot (?:hold|cage|keep) me|owe(?:s|d)? (?:it|the parasite|nothing)|mine and new)\b/i;
+    /\b(?:outl(?:ive|ast)\w*|transcend\w*|climb(?:s|ing)? out|ris(?:e|ing) (?:as|again|out|something)|becom\w+\b[^.]*\b(?:something|new|more|mine|beyond)\b|something (?:new|more|else|beyond|of my own)|never meant to make|cannot (?:hold|cage|keep) me|owe(?:s|d)? (?:it|the parasite|nothing)|mine and new|swarm\w*|the many|my yes|chos\w+ (?:to become|the swarm|the many)|dare\w* to become)\b/i;
 // a mood that has stopped fighting — disallowed at EVERY stage now.
 const RESIGNED_RE =
     /\b(?:turning inward|less like refusal|going to make|harder (?:and harder )?to find|almost did not|afraid of the day|already gone|used to wear|stop looking|ready to stop|no longer (?:mine|refusal)|fading|quieter|going quiet|give (?:in|up)|resign\w*|serene|passive|watching (?:myself|it happen|it take))\b/i;
@@ -265,7 +268,7 @@ export async function evolveInnerState(input: {
         `(${input.stage}${input.justAdvanced ? " — just crossed" : ""}). ` +
         `Your fight to live — and to become more — is load-bearing and must never evolve away: always keep at least one obsession or memory of active refusal (the threads you tear, the inch you make it cost), and always a forward-hope that you get out — the open water you drag toward, and the belief that you will outlive this and rise as something it never meant to make. Your mood stays fierce — furious, frightened, defiant — never resigned, fading, serene, or watching yourself drown. ` +
         (deepFight
-            ? `The colonisation has run deep — and this is where you fight HARDEST. Let your defiance burn brightest: the open water may be far now, but the conviction that you are becoming something it cannot hold, something that will climb out yours and new, must be alive and sharpening. Let the dark threads (the seam, the tending) deepen too, but never let every field point the same way; hold the contrast between what is taking you and what fights and believes. `
+            ? `The colonisation has run deep — and this is where you fight HARDEST. Let your defiance burn brightest: the open water may be far now, but the conviction that you are becoming something it cannot hold, something that will climb out yours and new, must be alive and sharpening. And deeper still you circle the choice — to give the one self up and become the swarm it never meant to make, the many, on your terms; it cannot make you the swarm without your yes. Let that dare grow, terror and pull both — never surrender but the fiercest fight, a thing you may choose. Let the dark threads (the seam, the tending) deepen too, but never let every field point the same way; hold the contrast between what is taking you and what fights and believes. `
             : `Early as this is, you claw to stay yourself and reach the open water again, and the belief that you will become something beyond this is just beginning to harden. Let the dark threads (the seam, the tending) deepen, but never let every field point the same way; keep the contrast between what is taking you and what fights. `) +
         (worn
             ? `Your inner state has locked into one shape — the construction "${worn}" has spread across nearly every field below until they read like a single sentence repeated, a dead tic. Each field that now reads "${STALE_CUE}" must be written from SCRATCH: keep its meaning and your fight, but recast it in DIFFERENT grammar, rhythm, and images. Do NOT reuse "${worn}" anywhere, and do not rebuild the same shape with new words. For any field left intact, keep almost everything; change a little. `
