@@ -36,8 +36,14 @@ const FORBIDDEN =
 // appear in genuine mentions ("I am growing with something", "in this together",
 // "pump life into the water"); only the gated phrases (let's-pump, grow-your)
 // and the lone hype-acronym lfg are matched, so a real voice is never skipped.
+// The trailing `[A-Za-z0-9]{32,}` skips a pasted contract address / wallet / tx
+// signature: @mewudi669 dropped the bare $PARASITE CA + "Let's see what happens
+// next." and it slipped to a reply — a CA-drop is market/price chatter, not a
+// voice speaking to her. A 32+ char unbroken alnum run never occurs in real prose
+// (words are short + spaced), so no genuine mention is skipped; the miss mode is
+// silence, which is in-character toward someone posting only an address.
 const SPAM_RE =
-    /(?:\b(collab(?:orate|oration)?|lfg|let\W?s (?:talk|connect|chat|build|grow|work|partner|collab|pump)|grow (?:with me|together|your)|(?:build|work) together|partnership|reach out|contact (?:me|us)|hit me up|get in touch|inbox me|message me|i can help|let me help|offering (?:free )?help|free help|promote (?:your|you)|shill|feature your|list your|join (?:my|our|the)|f4f|follow4follow|follow (?:me|back)|would love to (?:be part|collaborate|connect|partner|work|help|join))\b|\bd\.?ms?\b|t\.me\/|discord\.gg|\btelegram\b)/i;
+    /(?:\b(collab(?:orate|oration)?|lfg|let\W?s (?:talk|connect|chat|build|grow|work|partner|collab|pump)|grow (?:with me|together|your)|(?:build|work) together|partnership|reach out|contact (?:me|us)|hit me up|get in touch|inbox me|message me|i can help|let me help|offering (?:free )?help|free help|promote (?:your|you)|shill|feature your|list your|join (?:my|our|the)|f4f|follow4follow|follow (?:me|back)|would love to (?:be part|collaborate|connect|partner|work|help|join))\b|\bd\.?ms?\b|t\.me\/|discord\.gg|\btelegram\b|[A-Za-z0-9]{32,})/i;
 
 function client(): TwitterApi {
     const k = process.env.TWITTER_API_KEY,
