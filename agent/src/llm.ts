@@ -3,6 +3,7 @@ import {createAnthropic} from "@ai-sdk/anthropic";
 import {readFileSync} from "node:fs";
 import {z} from "zod";
 import {MODEL} from "./constants.js";
+import {stripMarkdown} from "./text.js";
 
 const SYSTEM_PROMPT_PATH = new URL("../prompts/charybdis.md", import.meta.url).pathname;
 
@@ -70,6 +71,10 @@ export async function decide(input: AgentInput, inner = ""): Promise<Decision> {
         else break;
     }
 
+    // X shows markdown literally — strip any *emphasis* the model mirrored from
+    // the prompt before the beat is posted AND logged, so the cleaned text is
+    // what feeds back into recent_posts (not an asterisked example to imitate).
+    object!.post_text = stripMarkdown(object!.post_text || "");
     return object!;
 }
 
@@ -125,7 +130,7 @@ export async function replyToMention(input: {mention: string; author: string; st
                   `knowing you better than yourself. Rewrite completely — show the takeover through concrete body or sensation ` +
                   `(a claw moving before you decide, a want that arrived without you), and do NOT use the words "better", "knows me", "knows you", or "learning to be".`;
         const {text} = await generateText({model: anthropic(MODEL), system: systemPrompt, prompt: base + nudge, maxRetries: 2});
-        reply = text.trim().replace(/^["']+|["']+$/g, "");
+        reply = stripMarkdown(text.trim().replace(/^["']+|["']+$/g, ""));
         // Keep within X's limit by ending on her last complete sentence, not a
         // mid-word chop that strands a fragment ("…the cage had") reading as
         // broken. If she ran on with no sentence break in the cap, let it trail

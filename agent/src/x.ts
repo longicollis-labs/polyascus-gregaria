@@ -1,8 +1,10 @@
 import {appendFileSync} from "node:fs";
 import {TwitterApi} from "twitter-api-v2";
 import {MOCK_X, MOCK_X_PATH} from "./constants.js";
+import {stripMarkdown} from "./text.js";
 
 export async function postTweet(text: string): Promise<string> {
+    text = stripMarkdown(text); // final net: no markdown ever reaches X
     if (MOCK_X) {
         const entry = {ts: new Date().toISOString(), text};
         appendFileSync(MOCK_X_PATH, JSON.stringify(entry) + "\n");
