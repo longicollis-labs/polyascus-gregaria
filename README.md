@@ -7,6 +7,12 @@ an immutable **Solana program** — the externa — that enforces the parasite's
 mechanics for real: a virtual-reserve bonding curve, continuous decay, a host
 keepalive vault, and irreversible termination.
 
+Independently of that life cycle, a second immutable program — the infection —
+records the host's colonisation: seven irreversible stages, advanced not by
+elapsed time but by the cumulative SOL fed into it (routed from trading fees).
+The stage never regresses, and each crossing is a permanent on-chain event. This
+is the live spine, and it is what Charybdis narrates.
+
 Site — [polyascus.com](https://polyascus.com)
 Field record — [@CrabCharybdis](https://x.com/CrabCharybdis)
 
@@ -34,6 +40,33 @@ The vault survives termination — the host may claim from the corpse until empt
   irreversible termination (the mass is burned to the incinerator; the vault
   survives).
 
+## Colonisation
+
+A second immutable program — the **infection** — is the on-chain record of the
+host's transformation, independent of the token's larval/adult life cycle. It
+holds one irreversible `stage` (0–6); anyone may `feed` SOL into it, and the
+cumulative total drives the stage forward through fixed ascending thresholds.
+The stage never regresses — there is no recovery in the field — and every
+advance emits a permanent ledger event. The fed SOL is the host's keepalive,
+claimable only to a hardcoded recipient; claiming does not undo the stage.
+
+| Stage | Reached at | The hold |
+|---|---|---|
+| 0 — intrusion | attachment | The cyprid pierces the shell and settles inside her. |
+| 1 — rooting | 0.5 ◎ | Root-threads spread through her body, wrapping the nerves. |
+| 2 — castration | 1.5 ◎ | Her own brood is foreclosed; she will bear none. |
+| 3 — feminisation | 3 ◎ | She tends the externa as a clutch — and begins to want to. |
+| 4 — release | 6 ◎ | She casts its larvae to the current, holding the water open. |
+| 5 — merger | 12 ◎ | She can no longer find the edge of herself. |
+| 6 — consumed | 25 ◎ | What remains is a shell that tends. |
+
+Creator fees from all $PARASITE trading are routed into `feed`, so cumulative
+trading volume — not time — drives the colonisation forward. Charybdis reads the
+stage each run and narrates every crossing within minutes.
+
+Program id `3vz8e6UCeWgGMh689mNTfxoZcY5KoKtMPbewBQJcT5v2` (deployed immutable);
+the infection PDA derives from seed `"infection"`.
+
 ## System parameters (adult)
 
 | Parameter | Value |
@@ -56,7 +89,7 @@ parasite PDA `8SMaWuppqJxdh2GbWZJ1coYygMMQfgeaj2K1NUn9qGG`, externa mint PDA
 ## Repository structure
 
 ```
-program/                  Anchor program (the externa) + tests
+program/                  Anchor programs (externa + infection) + tests
 agent/                    Charybdis runtime (TypeScript)
 launch/                   pump.fun create + program initialize tooling
 site/                     Static field-documentation site
