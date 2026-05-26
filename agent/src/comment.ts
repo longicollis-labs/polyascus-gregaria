@@ -1,24 +1,30 @@
-// Proactive commenting — Charybdis comes across a few posts from the wild each
-// day and passes remark on the select few that touch her world: her own kind
-// (crabs / lobsters / marine life / parasites) or the dry world's churn seen
-// through a crab's eye (the onchain/web3 noise — answered only as a crab would,
-// never naming its machinery). At most COMMENT_DAILY_CAP/day (default 4), spaced
-// by a minimum gap, desynced by a probability, and only when she actually has
-// something sharp to say — most candidates she lets pass.
+// Proactive commenting — Charybdis finds a few posts from the wild each day that
+// touch her world (kin: crabs / lobsters / marine life / parasites; dry-world:
+// the onchain/web3 churn, answered only as a crab would, never naming its
+// machinery) and DRAFTS a remark on the select few worth it — most she lets pass.
 //
-// Discovery is X recent-search (one query per eligible run, alternating her two
-// buckets). The shared FORBIDDEN leak guard + a follower floor + the spam filter
-// keep it safe and on-brand; dedup is per-tweet and per-author. State lives in
-// comments-log.json, committed back by the workflow so the daily cap survives the
-// ephemeral runner. DRY_RUN posts nothing.
+// X's automation policy forbids automated *unsolicited* replies — "sending
+// automated replies to posts based on keyword searches alone is not permitted",
+// and operating an AI reply bot needs prior written approval from X. Answering
+// mentions (replies.ts) is allowed because the user solicited contact; replying
+// to strangers we found by search is NOT. So by default this does NOT post: it
+// discovers + drafts (both allowed — reading public posts, generating text) and
+// queues each draft to comment-queue.json for a human to review and post by hand.
+// Set COMMENT_AUTOPOST=1 to post directly — ONLY if the operator holds X's
+// written approval for an AI reply bot; otherwise it risks suspension.
 //
-// Recent search needs the X API **Basic** tier; on a tier without it the search
-// 403s and this logs + no-ops (never throws the run).
+// Discovery is X recent-search (one query per eligible run, alternating buckets),
+// which needs the X API Basic/paid tier; without it the search 403s and this logs
+// + no-ops (never throws). At most COMMENT_DAILY_CAP drafts/day (default 4), a
+// min-gap apart, desynced by a probability; dedup per-tweet + per-author; the
+// shared FORBIDDEN leak guard + follower floor + spam filter keep it on-brand.
+// comments-log.json + comment-queue.json are committed by the workflow so the cap
+// + queue survive the ephemeral runner. DRY_RUN previews without writing.
 //
 // Env: TWITTER_* creds, ANTHROPIC_API_KEY, SOLANA_RPC_URL; optional
-// COMMENT_DAILY_CAP, COMMENT_MIN_GAP_MIN, COMMENT_PROB, COMMENT_MAX_EVAL,
-// COMMENT_MIN_FOLLOWERS, COMMENT_AUTHOR_COOLDOWN_DAYS, COMMENT_BIO_WEIGHT,
-// COMMENT_SEARCH_MAX, COMMENT_QUERIES_KIN, COMMENT_QUERIES_DRY, DRY_RUN.
+// COMMENT_AUTOPOST, COMMENT_DAILY_CAP, COMMENT_MIN_GAP_MIN, COMMENT_PROB,
+// COMMENT_MAX_EVAL, COMMENT_MIN_FOLLOWERS, COMMENT_AUTHOR_COOLDOWN_DAYS,
+// COMMENT_BIO_WEIGHT, COMMENT_SEARCH_MAX, COMMENT_QUERIES_KIN/_DRY, DRY_RUN.
 import {existsSync, readFileSync, writeFileSync} from "node:fs";
 import {commentOnPost, REPLY_TIC} from "./llm.js";
 import {FORBIDDEN, SPAM_RE, stripLeadingMentions, xClient} from "./guards.js";
@@ -26,8 +32,12 @@ import {readStage} from "./infection.js";
 import {loadInnerState, type InnerState} from "./inner.js";
 
 const DRY = process.env.DRY_RUN === "1";
+// Off by default. Posting unsolicited auto-replies needs X's written approval for
+// an AI reply bot (see the policy note above); otherwise leave this unset and
+// review the drafted queue by hand.
+const AUTOPOST = process.env.COMMENT_AUTOPOST === "1";
 const DAILY_CAP = Number(process.env.COMMENT_DAILY_CAP ?? "4");
-const MIN_GAP_MIN = Number(process.env.COMMENT_MIN_GAP_MIN ?? "150"); // spacing between comments
+const MIN_GAP_MIN = Number(process.env.COMMENT_MIN_GAP_MIN ?? "150"); // spacing between drafts
 const PROB = Number(process.env.COMMENT_PROB ?? "0.6"); // organic desync of eligible runs
 const MAX_EVAL = Number(process.env.COMMENT_MAX_EVAL ?? "3"); // LLM judgements per run (cost bound)
 const MIN_FOLLOWERS = Number(process.env.COMMENT_MIN_FOLLOWERS ?? "50"); // skip burner/bot accounts
@@ -37,6 +47,7 @@ const SEARCH_MAX = Number(process.env.COMMENT_SEARCH_MAX ?? "10"); // recent-sea
 const SKIP_AUTHORS = new Set(["crabcharybdis", "longicollislabs"]);
 const DAY_MS = 24 * 60 * 60 * 1000;
 const LOG_PATH = process.env.COMMENTS_LOG_PATH ?? new URL("../../comments-log.json", import.meta.url).pathname;
+const QUEUE_PATH = process.env.COMMENT_QUEUE_PATH ?? new URL("../../comment-queue.json", import.meta.url).pathname;
 
 // Recent-search queries, two buckets. `kin` is the safest and most on-brand —
 // marine biology, crustaceans, the parasites that are literally her story.
@@ -61,7 +72,9 @@ const Q_KIN = envList("COMMENT_QUERIES_KIN", Q_KIN_DEFAULT);
 const Q_DRY = envList("COMMENT_QUERIES_DRY", Q_DRY_DEFAULT);
 
 type Log = {
-    commented: Record<string, {ts?: string; repliedId?: string; [k: string]: unknown}>; // tweet id -> record (dedup; posted ones carry repliedId+ts)
+    // tweet id -> record. Drafted/posted carry ts (count toward the cap); posted
+    // also carry repliedId; guard-skips carry only `skipped` (dedup, never count).
+    commented: Record<string, {ts?: string; repliedId?: string; drafted?: string; skipped?: string; [k: string]: unknown}>;
     authors: Record<string, string>; // author id -> iso ts (per-author cooldown)
 };
 function loadLog(): Log {
@@ -83,17 +96,36 @@ function saveLog(l: Log): void {
     writeFileSync(LOG_PATH, JSON.stringify(l, null, 2) + "\n");
 }
 
-// Cadence from the log: only records that were actually POSTED (have repliedId)
-// count toward the daily cap and the last-comment time — guard/skip records are
-// kept for dedup but must not count as comments.
-function cadence(l: Log): {postedToday: number; sinceLastMin: number} {
+// The human-review queue: drafted remarks waiting for the operator to post by
+// hand (the compliant path). The operator reads it, posts the good ones on X, and
+// prunes them. Newest 100 kept.
+type QueueItem = {ts: string; tweet_id: string; url: string; author: string; their_post: string; draft: string; bucket: string; status: string};
+function loadQueue(): QueueItem[] {
+    if (existsSync(QUEUE_PATH)) {
+        try {
+            const q = JSON.parse(readFileSync(QUEUE_PATH, "utf8"));
+            return Array.isArray(q) ? q : [];
+        } catch {
+            /* fall through to empty */
+        }
+    }
+    return [];
+}
+function saveQueue(q: QueueItem[]): void {
+    writeFileSync(QUEUE_PATH, JSON.stringify(q.slice(-100), null, 2) + "\n");
+}
+
+// Cadence from the log: records that were drafted or posted (have ts, not a
+// guard-skip) count toward the daily cap and the last-action time, so the cap
+// limits drafts+posts combined; guard/skip records are kept for dedup only.
+function cadence(l: Log): {actedToday: number; sinceLastMin: number} {
     const times = Object.values(l.commented)
-        .filter((r) => r && r.repliedId && r.ts)
+        .filter((r) => r && r.ts && !r.skipped)
         .map((r) => new Date(r.ts as string).getTime());
     const now = Date.now();
-    const postedToday = times.filter((t) => now - t < DAY_MS).length;
+    const actedToday = times.filter((t) => now - t < DAY_MS).length;
     const sinceLastMin = times.length ? (now - Math.max(...times)) / 60000 : Infinity;
-    return {postedToday, sinceLastMin};
+    return {actedToday, sinceLastMin};
 }
 
 // A compact inner brief — her current register and sharpest fixation only. The
@@ -119,9 +151,10 @@ function compactInner(s: InnerState): string {
 
 async function main(): Promise<void> {
     const log = loadLog();
-    const {postedToday, sinceLastMin} = cadence(log);
-    if (postedToday >= DAILY_CAP) {
-        console.log(`comments: ${postedToday}/${DAILY_CAP} today — done`);
+    const {actedToday, sinceLastMin} = cadence(log);
+    const verb = AUTOPOST ? "posts" : "drafts";
+    if (actedToday >= DAILY_CAP) {
+        console.log(`comments: ${actedToday}/${DAILY_CAP} ${verb} today — done`);
         return;
     }
     if (sinceLastMin < MIN_GAP_MIN) {
@@ -136,6 +169,7 @@ async function main(): Promise<void> {
     const c = xClient();
     const stage = (await readStage())?.name ?? "rooting";
     const inner = compactInner(loadInnerState());
+    const queue = loadQueue();
 
     const kin = Math.random() < BIO_WEIGHT;
     const pool = kin ? Q_KIN : Q_DRY;
@@ -176,7 +210,7 @@ async function main(): Promise<void> {
         return true;
     });
     console.log(
-        `comments: query[${kin ? "kin" : "dry"}] ${(res.data?.data ?? []).length} found · ${candidates.length} candidate(s) · ${postedToday}/${DAILY_CAP} today · stage ${stage}`,
+        `comments: query[${kin ? "kin" : "dry"}] ${(res.data?.data ?? []).length} found · ${candidates.length} candidate(s) · ${actedToday}/${DAILY_CAP} ${verb} today · stage ${stage} · mode ${AUTOPOST ? "AUTOPOST" : "draft"}`,
     );
 
     let evaluated = 0;
@@ -200,14 +234,16 @@ async function main(): Promise<void> {
         }
         if (FORBIDDEN.test(out.comment) || REPLY_TIC.test(out.comment)) {
             console.log(`skip @${uname} (guard): ${out.comment}`);
-            if (!DRY) log.commented[t.id] = {skipped: "guard", ts: new Date().toISOString()}; // dedup only — no repliedId, won't count
+            if (!DRY) log.commented[t.id] = {skipped: "guard"}; // dedup only — no ts, never counts
             continue;
         }
 
         const iso = new Date().toISOString();
+        const url = `https://x.com/${uname}/status/${t.id}`;
         if (DRY) {
-            console.log(`[DRY] would comment on @${uname}: "${text.slice(0, 80)}"\n      → ${out.comment}`);
-        } else {
+            console.log(`[DRY] ${AUTOPOST ? "would post" : "would queue"} reply to @${uname}: "${text.slice(0, 80)}"\n      → ${out.comment}`);
+        } else if (AUTOPOST) {
+            // Unsolicited auto-reply — only with X's written approval (see header).
             try {
                 const r = await c.v2.reply(out.comment, t.id);
                 log.commented[t.id] = {comment: out.comment, author: uname, said: text.slice(0, 200), repliedId: r.data.id, bucket: kin ? "kin" : "dry", ts: iso};
@@ -218,8 +254,16 @@ async function main(): Promise<void> {
                 console.error("comment failed", t.id, (e as Error)?.message || e);
                 continue;
             }
+        } else {
+            // Default, compliant path: draft for a human to review and post by hand.
+            queue.push({ts: iso, tweet_id: t.id, url, author: uname, their_post: text.slice(0, 280), draft: out.comment, bucket: kin ? "kin" : "dry", status: "pending"});
+            saveQueue(queue);
+            log.commented[t.id] = {drafted: out.comment, author: uname, said: text.slice(0, 200), bucket: kin ? "kin" : "dry", ts: iso};
+            log.authors[author] = iso;
+            saveLog(log);
+            console.log(`queued draft for @${uname} (${url}): ${out.comment}`);
         }
-        break; // at most one comment per run
+        break; // at most one per run
     }
     if (!DRY) saveLog(log);
     console.log("done");

@@ -69,10 +69,11 @@ jobs:
           SOLANA_RPC_URL: ${{ vars.SOLANA_RPC_URL }}
         run: npm run replies
 
-      # Pass remark on a select few posts from the wild (kin: crabs/marine life;
-      # dry-world: onchain/web3 churn through a crab's eye). Self-gated to a few a
-      # day. Non-fatal: a search-tier 403 or any failure must not block the run.
-      - name: Comment on the wild
+      # Draft remarks on a select few wild posts (kin: crabs/marine life;
+      # dry-world: onchain/web3 churn through a crab's eye) into comment-queue.json
+      # for human review. Does NOT auto-post — X forbids automated unsolicited
+      # replies; COMMENT_AUTOPOST=1 only with X's written approval. Non-fatal.
+      - name: Draft comments on the wild
         continue-on-error: true
         working-directory: agent
         env:
@@ -86,10 +87,10 @@ jobs:
 
       - name: Commit logs if changed
         run: |
-          if [[ -n "$(git status --porcelain charybdis-log.json replies-log.json comments-log.json charybdis-state.json)" ]]; then
+          if [[ -n "$(git status --porcelain charybdis-log.json replies-log.json comments-log.json comment-queue.json charybdis-state.json)" ]]; then
             git config user.name "charybdis"
             git config user.email "charybdis@polyascus.com"
-            git add charybdis-log.json replies-log.json comments-log.json charybdis-state.json
+            git add charybdis-log.json replies-log.json comments-log.json comment-queue.json charybdis-state.json
             git commit -m "log: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
             git push || (git pull --rebase --autostash origin main && git push)
           else
