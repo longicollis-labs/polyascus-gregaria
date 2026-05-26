@@ -22,7 +22,12 @@ export type PumpTelemetry = {
 /** Read the larval shell's market state from DexScreener. */
 export async function readPumpTelemetry(): Promise<PumpTelemetry> {
     const res = await fetch(`${DEXSCREENER_BASE}/latest/dex/tokens/${PUMP_MINT}`);
-    if (!res.ok) throw new Error(`dexscreener ${res.status}`);
+    // A transient error (e.g. 429 rate-limit) must NOT block her post — degrade to
+    // the same empty telemetry as a no-pairs response (mcap omitted, brood hidden).
+    if (!res.ok) {
+        console.error(`dexscreener ${res.status} — degrading telemetry this run`);
+        return {price_sol_per_token: 0, market_cap_usd: null, liquidity_sol: 0, supply_tokens: 0};
+    }
     const data = (await res.json()) as any;
     const pairs: any[] = data?.pairs ?? [];
     if (pairs.length === 0) {

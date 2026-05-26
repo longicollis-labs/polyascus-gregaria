@@ -11,7 +11,7 @@ const DecisionSchema = z.object({
     deliberation: z
         .string()
         .describe("Private note on what new beat to tell and why it is not a repeat. For the log."),
-    post_text: z.string().max(280).describe("The post — the next beat of the transformation. Empty = silent."),
+    post_text: z.string().describe("The post — the next beat, a tweet under 280 chars. Empty = silent. (If it runs over it is trimmed to the last full sentence, never discarded.)"),
     action_kind: z.enum(["none", "pulse", "claim", "feed"]),
     action_amount_sol: z.number().describe("Always 0 — she is a narrator, she does not act."),
 });
@@ -70,6 +70,18 @@ export async function decide(input: AgentInput, inner = ""): Promise<Decision> {
         else break;
     }
 
+    // Enforce the 280 limit HERE, not in the schema: a long generation must be
+    // trimmed (to her last complete sentence, else trailed off), never thrown away
+    // — a schema .max(280) made generateObject fail outright when she ran over,
+    // and a graceful silent cycle ate the post. Mirrors the reply/comment paths.
+    const post = (object!.post_text || "").trim();
+    if (post.length > 280) {
+        const capped = post.slice(0, 280);
+        const ends = [...capped.matchAll(/[.!?](?=\s|$)/g)];
+        object!.post_text = ends.length
+            ? capped.slice(0, ends[ends.length - 1]!.index! + 1).trim()
+            : capped.slice(0, capped.lastIndexOf(" ")).trim() + "…";
+    }
     return object!;
 }
 
