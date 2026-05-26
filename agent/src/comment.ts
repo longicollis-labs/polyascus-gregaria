@@ -27,7 +27,7 @@
 // COMMENT_BIO_WEIGHT, COMMENT_SEARCH_MAX, COMMENT_QUERIES_KIN/_DRY, DRY_RUN.
 import {existsSync, readFileSync, writeFileSync} from "node:fs";
 import {commentOnPost, REPLY_TIC} from "./llm.js";
-import {FORBIDDEN, SPAM_RE, stripLeadingMentions, xClient} from "./guards.js";
+import {FORBIDDEN, SENSITIVE_RE, SPAM_RE, stripLeadingMentions, xClient} from "./guards.js";
 import {readStage} from "./infection.js";
 import {loadInnerState, type InnerState} from "./inner.js";
 
@@ -207,6 +207,7 @@ async function main(): Promise<void> {
         const text = stripLeadingMentions(t.text);
         if (text.length < 15) return false; // nothing to remark on
         if (SPAM_RE.test(text)) return false;
+        if (SENSITIVE_RE.test(text)) return false; // medical/dewormer quackery — never hers to touch
         return true;
     });
     console.log(

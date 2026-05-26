@@ -55,5 +55,29 @@ export const FORBIDDEN =
 export const SPAM_RE =
     /(?:\b(collab(?:orate|oration)?|lfg|let\W?s (?:talk|connect|chat|build|grow|work|partner|collab|pump)|grow (?:with me|together|your)|(?:build|work) together|partnership|reach out|contact (?:me|us)|hit me up|get in touch|inbox me|message me|i can help|let me help|offering (?:free )?help|free help|promote (?:your|you)|shill|feature your|list your|join (?:my|our|the)|f4f|follow4follow|follow (?:me|back)|would love to (?:be part|collaborate|connect|partner|work|help|join))\b|\bd\.?ms?\b|t\.me\/|discord\.gg|\btelegram\b|[A-Za-z0-9]{32,})/i;
 
+// Topics a strange crab's unsolicited remark can only cheapen or harm — so the
+// proactive-comment path skips the post BEFORE spending a judgement on it. The
+// prompt already tells her to pass these in silence (commentOnPost lists "a
+// parasite cleanse" by name), but that rule doesn't hold on the small model: in
+// dry runs her `worth` judgement drafted a remark on a real "PARASITE CLEANSE
+// PROTOCOL" ivermectin post 4 of 6 times — "parasite" is her own theme word, so a
+// medical-dewormer post fuses with her lens and lures her in, and that crowd
+// floods every "parasite" search. Same reason FORBIDDEN/SPAM_RE exist: a
+// deterministic backstop for what the prompt can't guarantee. This tests only the
+// INCOMING post, so it can never gag her voice; the miss mode is silence, which is
+// the comment path's honest default ("most she lets pass"). Scope is the EVIDENCED
+// human-medical/health/dewormer-quackery cluster only — the words below never
+// occur in her marine/crab/kin narrative. Deliberately NOT bare `cancer` (Cancer
+// pagurus is the edible brown crab; the Cancer genus/zodiac is literally a crab —
+// it would skip genuine kin posts) and NOT `memorial` (Memorial Day fishing); the
+// two cancer-quackery posts are caught by `ivermectin`/`terrain theory` instead.
+// Politics/death stay with the prompt (it passes the Memorial-tribute post live);
+// politics is unbounded and collides with her own lens (agent, cage, control,
+// owned) — if a death/politics remark ever leaks live, add the tight marker then.
+// Used by the comment path (comment.ts), where the leak was demonstrated; the
+// reply path (solicited mentions) leaves it to the prompt unless one shows there.
+export const SENSITIVE_RE =
+    /\b(?:cleanse|detox|deworm(?:er|ing)?|ivermectin|mebendazole|fenbendazole|albendazole|chemo|naturopath\w*|big pharma|terrain theory)\b/i;
+
 export const stripLeadingMentions = (s: string) =>
     s.replace(/^(\s*@\w+)+\s*/g, "").replace(/\s+/g, " ").trim();
