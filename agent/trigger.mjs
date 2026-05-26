@@ -76,6 +76,31 @@ async function chainStage() {
     }
 }
 
+// Minutes since the most recent charybdis run was *dispatched*, read fresh from
+// the Actions API (NOT the CDN-cached log). A run shows up here the instant it is
+// dispatched, so this sees a just-fired post even when the log read below cannot.
+// Backstop for the stale-read double-dispatch (see the cooldown guard). Any
+// failure → Infinity → no cooldown applied → prior log-only behaviour; it can
+// never wrongly hold her.
+async function lastRunMin() {
+    try {
+        const r = await fetch(
+            `https://api.github.com/repos/${REPO}/actions/workflows/charybdis.yml/runs?per_page=1`,
+            {headers: {...base, Accept: "application/vnd.github+json"}},
+        );
+        if (!r.ok) {
+            console.error(`runs ${r.status}`);
+            return Infinity;
+        }
+        const j = await r.json();
+        const created = j?.workflow_runs?.[0]?.created_at;
+        return created ? (Date.now() - new Date(created).getTime()) / 60000 : Infinity;
+    } catch (e) {
+        console.error("run history failed:", e?.message || e);
+        return Infinity;
+    }
+}
+
 const onchain = await chainStage();
 const advanced = onchain != null && lastStage != null && onchain > lastStage;
 
@@ -89,6 +114,23 @@ if (!log) {
 const target = 20 + Math.random() * 5;
 if (!advanced && sinceMin < target) {
     console.log(`holding: ${sinceMin.toFixed(1)}m < ${target.toFixed(1)}m (stage ${onchain ?? "?"}, last ${lastStage ?? "?"})`);
+    process.exit(0);
+}
+
+// Anti-double-dispatch backstop. sinceMin/lastStage come from the log, served by
+// a CDN that can lag a just-committed post by ~10 min — so a post (or crossing)
+// that already fired can be invisible above, and the check re-fires it (the
+// 5-min double/triple posts seen at 19:40/45/51 and at the 18:40 crossing). The
+// run history, unlike the log, shows a dispatch immediately: if we dispatched
+// within RUN_COOLDOWN_MIN, that run is in flight or just landed, so hold. Kept
+// below the 20-min cadence floor → it only closes the stale window, never
+// perturbs the real cadence. A crossing still fires the moment the cooldown
+// clears (sparse, so it rarely coincides with a recent post — and then narrates
+// once instead of tripling). lastRunMin failure → Infinity → never holds her.
+const RUN_COOLDOWN_MIN = 12;
+const sinceRun = await lastRunMin();
+if (sinceRun < RUN_COOLDOWN_MIN) {
+    console.log(`holding: dispatched ${sinceRun.toFixed(1)}m ago < ${RUN_COOLDOWN_MIN}m cooldown — log likely stale, avoiding a double (stage ${onchain ?? "?"}, last ${lastStage ?? "?"})`);
     process.exit(0);
 }
 
