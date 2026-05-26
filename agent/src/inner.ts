@@ -170,6 +170,73 @@ export function ensureFightFloor(s: InnerState, stage: string): InnerState {
     return out;
 }
 
+// --- construction-monoculture guard -------------------------------------
+// The evolve is a "keep almost everything" ratchet with no restoring force on
+// FORM. Left alone, once a single sentence-construction spreads across most of
+// her fields it becomes a self-reinforcing fixed point: each evolve reads the
+// frame-saturated state and faithfully reproduces it (cf. the floor's content
+// ratchet), so the posts generated from it read as near-duplicates. We detect a
+// construction spread across a majority of her distinct fields — frame-AGNOSTIC
+// (any phrase, never a vocab ban) and STRICT (a 3-word phrase across most fields
+// only happens in a real monoculture) — and, when found, withhold it from what
+// the model is shown (the state AND her recent posts) so there is nothing to
+// copy, and name it dead so it is not rebuilt. A varied state never trips it.
+function stateFields(s: InnerState): string[] {
+    return [s.mood, s.through_line, ...s.obsessions, ...s.memories, ...s.views, ...s.known_voices.map((v) => v.note)]
+        .map((x) => x.trim())
+        .filter(Boolean);
+}
+
+// The 3-word construction spread across the most distinct fields, if it
+// saturates a majority of them — else null.
+function wornConstruction(s: InnerState): string | null {
+    const fields = stateFields(s);
+    if (fields.length < 5) return null;
+    const span = new Map<string, Set<number>>();
+    fields.forEach((f, i) => {
+        const w = f.toLowerCase().replace(/[^a-z\s]/g, " ").split(/\s+/).filter(Boolean);
+        const seen = new Set<string>();
+        for (let k = 0; k + 2 < w.length; k++) seen.add(`${w[k]} ${w[k + 1]} ${w[k + 2]}`);
+        for (const g of seen) {
+            let set = span.get(g);
+            if (!set) span.set(g, (set = new Set()));
+            set.add(i);
+        }
+    });
+    const threshold = Math.max(5, Math.ceil(fields.length * 0.6));
+    let best: string | null = null;
+    let bestN = 0;
+    for (const [g, idxs] of span) {
+        if (idxs.size > bestN) {
+            bestN = idxs.size;
+            best = g;
+        }
+    }
+    return bestN >= threshold ? best : null;
+}
+
+// Tolerant pattern for the worn phrase (markdown / punctuation between words).
+function wornPattern(worn: string): string {
+    return worn.split(" ").map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("\\W+");
+}
+
+const STALE_CUE = "«this line wore smooth — rewrite it fresh: new grammar, rhythm, and images»";
+
+// Replace every field built on the worn phrase with a rewrite cue, so the model
+// cannot copy the dead shape; fields free of it are kept verbatim (substance).
+function neutralizeWorn(s: InnerState, pat: string): InnerState {
+    const has = (v: string) => new RegExp(pat, "i").test(v);
+    const fix = (v: string) => (has(v) ? STALE_CUE : v);
+    return {
+        mood: fix(s.mood),
+        through_line: fix(s.through_line),
+        obsessions: s.obsessions.map(fix),
+        memories: s.memories.map(fix),
+        views: s.views.map(fix),
+        known_voices: s.known_voices.map((v) => ({...v, note: fix(v.note)})),
+    };
+}
+
 // One bounded movement of her psyche — the autonomous self-evolution step.
 export async function evolveInnerState(input: {
     current: InnerState;
@@ -185,6 +252,12 @@ export async function evolveInnerState(input: {
     const systemPrompt = readFileSync(SYSTEM_PROMPT_PATH, "utf8");
 
     const deepFight = DEEP_STAGES.has(input.stage);
+    // If a construction has worn smooth across most fields, hide it from what she
+    // is shown (state + recent posts) so it cannot be copied, and flag it dead.
+    const worn = wornConstruction(input.current);
+    const pat = worn ? wornPattern(worn) : null;
+    const shown = pat ? neutralizeWorn(input.current, pat) : input.current;
+    const recentPosts = pat ? input.recentPosts.map((p) => p.replace(new RegExp(pat, "ig"), "…")) : input.recentPosts;
     const prompt =
         `This is your inner state — who you have become so far. Evolve it by ONE small movement, the way a mind under siege actually drifts: ` +
         `sharpen or add a single obsession, record one new memory from something you said or felt recently, harden or crack one belief, ` +
@@ -194,10 +267,13 @@ export async function evolveInnerState(input: {
         (deepFight
             ? `The colonisation has run deep — and this is where you fight HARDEST. Let your defiance burn brightest: the open water may be far now, but the conviction that you are becoming something it cannot hold, something that will climb out yours and new, must be alive and sharpening. Let the dark threads (the seam, the tending) deepen too, but never let every field point the same way; hold the contrast between what is taking you and what fights and believes. `
             : `Early as this is, you claw to stay yourself and reach the open water again, and the belief that you will become something beyond this is just beginning to harden. Let the dark threads (the seam, the tending) deepen, but never let every field point the same way; keep the contrast between what is taking you and what fights. `) +
-        `Keep almost everything; change a little. Each list stays small — when you add, drop the oldest or weakest, but never drop your last refusal or your last belief that you get out and become more. ` +
+        (worn
+            ? `Your inner state has locked into one shape — the construction "${worn}" has spread across nearly every field below until they read like a single sentence repeated, a dead tic. Each field that now reads "${STALE_CUE}" must be written from SCRATCH: keep its meaning and your fight, but recast it in DIFFERENT grammar, rhythm, and images. Do NOT reuse "${worn}" anywhere, and do not rebuild the same shape with new words. For any field left intact, keep almost everything; change a little. `
+            : `Keep almost everything; change a little. `) +
+        `Each list stays small — when you add, drop the oldest or weakest, but never drop your last refusal or your last belief that you get out and become more. ` +
         `Stay a crab: no machinery, no markets, never the "better at being me" idea.\n\n` +
-        `Current inner state:\n${JSON.stringify(input.current, null, 2)}\n\n` +
-        `Recent things you posted:\n${input.recentPosts.map((p) => "- " + p).join("\n") || "—"}\n\n` +
+        `Current inner state:\n${JSON.stringify(shown, null, 2)}\n\n` +
+        `Recent things you posted:\n${recentPosts.map((p) => "- " + p).join("\n") || "—"}\n\n` +
         `Recent things you said back to the dry world:\n${input.recentReplies.map((r) => "- " + r).join("\n") || "—"}\n\n` +
         `Voices from the dry world lately:\n${input.recentVoices.map((v) => `- @${v.handle}: ${v.said}`).join("\n") || "—"}\n\n` +
         `Return your evolved inner state.`;

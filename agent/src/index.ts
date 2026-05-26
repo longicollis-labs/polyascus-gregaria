@@ -77,6 +77,23 @@ async function main(): Promise<void> {
         vitals.phase + ")",
     );
 
+    // Over-dispatch backstop. The Render trigger paces her to ~20–25 min, but when
+    // its CDN-cached log read is stale a just-posted tweet looks invisible and it
+    // re-dispatches within minutes — and with cancel-in-progress:false those extra
+    // runs queue and post, so two or three near-identical tweets land in a row.
+    // This workflow checks out fresh main each run, so the last-post time here is
+    // reliable: refuse a *normal* post inside MIN_POST_GAP_S of the last one. A
+    // stage crossing is exempt (it must narrate at once) — and once a crossing is
+    // logged, a repeat dispatch is no longer "just advanced", so it falls through
+    // to this same gate. Complements trigger.mjs's dispatch cooldown but, unlike
+    // it, runs on GitHub Actions off latest main, so it needs no external redeploy.
+    const MIN_POST_GAP_S = 15 * 60;
+    const sinceLastPost = secondsSince(log, (e) => !!e.posted_tweet_id);
+    if (!justAdvanced && sinceLastPost != null && sinceLastPost < MIN_POST_GAP_S) {
+        console.log(`skip: last post ${Math.round(sinceLastPost / 60)}m ago (< ${MIN_POST_GAP_S / 60}m floor) and no crossing — over-dispatch backstop`);
+        return;
+    }
+
     const inner = loadInnerState();
     const decision = await decide(input, renderInner(inner));
     console.log("decision:", decision);
