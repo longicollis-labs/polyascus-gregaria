@@ -9,6 +9,10 @@ const PUMP_MINT = "CAqw4VTrgYoeW8s9qox19hNs1p4W6DhCce2DfBgEpump"; // larval phas
 const INFECTION_PDA = "6FVKnUGGv3LuwNGVwyiuCPsQKt9MrhZwDDU7ZybmTgtc"; // on-chain colonisation stage
 const STAGE_NAMES = ["Intrusion", "Rooting", "Castration", "Feminisation", "Release", "Merger", "Consumed"];
 
+// The live colonisation stage word, surfaced in the top bar. Set by refreshStage
+// (the on-chain narrative state) and read by refreshVitals; null until first read.
+let liveStageName = null;
+
 const SOLANA_RPC_URL = "https://mainnet.helius-rpc.com/?api-key=fe1af088-e142-478c-a228-20c1f56888a3";
 const DEXSCREENER = "https://api.dexscreener.com/latest/dex/tokens/";
 const LOG_URL =
@@ -202,7 +206,7 @@ async function refreshVitals() {
             stateEl.classList.toggle("dead", p.dead);
             document.getElementById("contract-addr").textContent = EXTERNA_MINT;
 
-            const stats = [{k: "phase", v: p.dead ? "terminated" : "externa"}];
+            const stats = [{k: "stage", v: p.dead ? "terminated" : (liveStageName ?? "externa")}];
             const {mcap, brood} = await getPumpStats();
             if (mcap) stats.push({k: "market cap", v: fmtUsd(mcap)});
             if (lifetime > 0) stats.push({k: "age", v: fmtDurationShort(lifetime)});
@@ -237,13 +241,13 @@ async function refreshVitals() {
                 const price = Number(pair?.priceNative ?? 0);
                 const mcap = Number(pair?.marketCap ?? pair?.fdv ?? 0);
                 setStats([
-                    {k: "phase", v: "infected"},
+                    {k: "stage", v: liveStageName ?? "infected"},
                     ...(mcap ? [{k: "market cap", v: fmtUsd(mcap)}] : []),
                 ]);
                 document.getElementById("v-reserve").textContent = fmtSol(liq) + " SOL (pool)";
                 document.getElementById("v-price").textContent = fmtPrice(price) + " SOL / $PARASITE";
             } else {
-                setStats([{k: "phase", v: "infected"}]);
+                setStats([{k: "stage", v: liveStageName ?? "infected"}]);
             }
             setBrood(broodOf(pair));
             document.getElementById("v-supply").textContent = "—";
@@ -374,6 +378,7 @@ async function refreshStage() {
         const thresholds = [];
         for (let i = 0; i < 6; i++) thresholds.push(u64(72 + i * 8));
         const stage = bytes[120];
+        liveStageName = STAGE_NAMES[Math.min(stage, 6)] || liveStageName;
         const fed = u64(121);
 
         if (stageEl) stageEl.textContent = STAGE_NAMES[Math.min(stage, 6)] || "dormant";
@@ -436,7 +441,8 @@ window.__refreshStage = refreshStage;
 // ── Loop ────────────────────────────────────────────────────────────────
 
 async function loop() {
-    await Promise.all([refreshVitals(), refreshPosts(), refreshStage()]);
+    await refreshStage();
+    await Promise.all([refreshVitals(), refreshPosts()]);
     setTimeout(loop, POLL_MS);
 }
 
