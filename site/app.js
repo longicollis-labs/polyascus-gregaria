@@ -178,10 +178,13 @@ async function refreshVitals() {
     const stateEl = document.getElementById("v-state");
     try {
         const info = await rpc("getAccountInfo", [PARASITE_PDA, {encoding: "base64"}]);
+        const p = info && info.value && info.value.data ? decodeParasite(b64ToBytes(info.value.data[0])) : null;
 
-        // ── Adult: the externa program is live. ──
-        if (info && info.value && info.value.data) {
-            const p = decodeParasite(b64ToBytes(info.value.data[0]));
+        // ── Adult: the externa program, once it has actually been bought into. ──
+        // Its PDA is initialised early as a dormant shell — born_at stays 0 until
+        // the first buy reaches it. An unborn shell is not the live market, so
+        // while born_at is 0 the larva on pump.fun still is: fall through to it.
+        if (p && p.born_at > 0) {
             const reserve = p.real_lamports / 1e9;
             const vault = p.vault_lamports / 1e9;
 
@@ -193,10 +196,9 @@ async function refreshVitals() {
 
             const price = supply < MAX_SUPPLY ? (reserve + VIRTUAL_SOL) / (MAX_SUPPLY - supply) : 0;
             const now = Math.floor(Date.now() / 1000);
-            const lifetime = p.born_at === 0 ? 0 : p.dead ? p.terminated_at - p.born_at : now - p.born_at;
-            const label = p.dead ? "terminated" : p.born_at === 0 ? "unborn (externa formed, no inflow)" : "alive";
+            const lifetime = p.dead ? p.terminated_at - p.born_at : now - p.born_at;
 
-            stateEl.textContent = label;
+            stateEl.textContent = p.dead ? "terminated" : "alive";
             stateEl.classList.toggle("dead", p.dead);
             document.getElementById("contract-addr").textContent = EXTERNA_MINT;
 
@@ -211,16 +213,16 @@ async function refreshVitals() {
             document.getElementById("v-supply").textContent = fmtSupply(supply) + " $PARASITE";
             document.getElementById("v-price").textContent = fmtPrice(price) + " SOL / $PARASITE";
             document.getElementById("v-vault").textContent = fmtSol(vault) + " SOL";
-            document.getElementById("v-lifetime").textContent = lifetime === 0 ? "not yet born" : fmtDuration(lifetime);
+            document.getElementById("v-lifetime").textContent = fmtDuration(lifetime);
             document.getElementById("v-projeat").textContent = p.dead ? "—" : (reserve * DECAY_RATE_HR).toExponential(3) + " SOL · hour⁻¹";
             document.getElementById("v-projdeath").textContent = p.dead ? "—" : `${UNTOUCHED_LIFESPAN_H} hours (≈ 8.33 days)`;
             document.getElementById("side-reserve").textContent = fmtSolShort(reserve);
             document.getElementById("side-vault").textContent = fmtSolShort(vault);
-            document.getElementById("side-lifetime").textContent = lifetime === 0 ? "—" : fmtDurationShort(lifetime);
+            document.getElementById("side-lifetime").textContent = fmtDurationShort(lifetime);
             return;
         }
 
-        // ── Larval: the cyprid on pump.fun. ──
+        // ── Larval / unborn externa: the cyprid on pump.fun (the live market). ──
         if (PUMP_MINT) {
             const res = await fetch(DEXSCREENER + PUMP_MINT);
             const data = await res.json();
