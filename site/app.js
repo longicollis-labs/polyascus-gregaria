@@ -7,7 +7,7 @@ const PARASITE_PDA = "8SMaWuppqJxdh2GbWZJ1coYygMMQfgeaj2K1NUn9qGG";
 const EXTERNA_MINT = "Hw5muMCG6b4RucNb2ep8n7EWwdDPjvzsZmZmEeZaZCMb";
 const PUMP_MINT = "CAqw4VTrgYoeW8s9qox19hNs1p4W6DhCce2DfBgEpump"; // larval phase
 const INFECTION_PDA = "6FVKnUGGv3LuwNGVwyiuCPsQKt9MrhZwDDU7ZybmTgtc"; // on-chain colonisation stage
-const STAGE_NAMES = ["intrusion", "rooting", "castration", "feminisation", "release", "merger", "consumed"];
+const STAGE_NAMES = ["Intrusion", "Rooting", "Castration", "Feminisation", "Release", "Merger", "Consumed"];
 
 const SOLANA_RPC_URL = "https://mainnet.helius-rpc.com/?api-key=fe1af088-e142-478c-a228-20c1f56888a3";
 const DEXSCREENER = "https://api.dexscreener.com/latest/dex/tokens/";

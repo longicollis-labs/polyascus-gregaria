@@ -1,6 +1,6 @@
 :root {
     --bg: #ffffff;
-    --bg-soft: #fafaf9;
+    --bg-soft: #ffffff;
     --bg-elev: #ffffff;
     --fg: #0e0e10;
     --fg-soft: #2a2a2e;
@@ -32,11 +32,10 @@
 /* ── The record registers the descent ───────────────────────────────────────
    As the on-chain colonisation advances, the parasite deepens its hold on the
    document: its taupe thickens through the spine and the structural rules — the
-   connective tissue of the record — and the paper steeps a touch warmer, as if
-   sinking from the surface light. Her own black ink is the last thing still hers
-   and is never touched, so the record stays fully legible at every stage. The
-   baseline (no stage / pre-JS / rooting, where she is now) is the current look;
-   only a crossing deepens it, and the change eases in rather than snaps. */
+   connective tissue of the record. The paper itself stays pure white, and her
+   own black ink is never touched, so the record stays fully legible at every
+   stage. The baseline (no stage / pre-JS) is the lightest look; only a crossing
+   deepens the taupe, and the change eases in rather than snaps. */
 @property --depth {
     syntax: "<percentage>";
     inherits: true;
@@ -54,7 +53,7 @@ html[data-stage] {
     --rule: color-mix(in srgb, #d6c8b3 var(--depth), #e6e4df);
     --rule-soft: color-mix(in srgb, #e8decd var(--depth), #f0eeea);
     --bg: #ffffff;
-    --bg-soft: color-mix(in srgb, #f1e9db var(--depth), #fafaf9);
+    --bg-soft: #ffffff;
     transition: --depth 1.4s ease;
 }
 
