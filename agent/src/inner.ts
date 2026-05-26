@@ -170,6 +170,54 @@ export function ensureFightFloor(s: InnerState, stage: string): InnerState {
     return out;
 }
 
+// --- construction-saturation guard (the headline-field half of the frame fix) -
+// The evolve prompt above asks her to break a worn sentence-shape, but the small
+// model still copies the two SCALAR headline fields (mood, through_line) verbatim
+// when they carry the worn frame — they're re-fed to it intact in "Current inner
+// state:" below and "keep almost everything" wins, so the list-field instruction
+// never reaches them. Those two lead every post and reply (renderInner), so a
+// frame locked into them dominates her whole voice. Fix: before showing the state
+// to the model, if a single construction has worn across most of the fields,
+// withhold the worn scalar(s) — swap the value for a rewrite cue — so there is
+// nothing to copy and the model must write them fresh. Frame-AGNOSTIC (detects any
+// over-spread construction; never a vocab ban — "learning to" is the grammar of
+// her current fight, not a banned word) and STRICT: one 3-word run spanning a
+// majority of distinct fields only happens in a degenerate monoculture, never a
+// healthy varied state, so healthy states pass through untouched (verified by
+// running it against the seed). Never mutates the saved state.
+function frameWords(s: string): string[] {
+    return s.toLowerCase().replace(/[^a-z\s]/g, " ").split(/\s+/).filter(Boolean);
+}
+function frameGrams(s: string): Set<string> {
+    const w = frameWords(s);
+    const out = new Set<string>();
+    for (let i = 0; i + 2 < w.length; i++) out.add(`${w[i]} ${w[i + 1]} ${w[i + 2]}`);
+    return out;
+}
+// The 3-gram present in the most distinct fields, and the count of fields it spans.
+function dominantFrame(fields: string[]): {gram: string; spread: number} {
+    const spread = new Map<string, number>();
+    for (const f of fields) for (const g of frameGrams(f)) spread.set(g, (spread.get(g) ?? 0) + 1);
+    let gram = "";
+    let best = 0;
+    for (const [g, n] of spread) if (n > best) ((best = n), (gram = g));
+    return {gram, spread: best};
+}
+const WORN_CUE =
+    "(this field has worn into the one repeated sentence-shape the instructions warn against — do not reuse that shape; write this field fresh now, in plainer and different grammar)";
+export function withWornScalarsWithheld(s: InnerState): InnerState {
+    const fields = [s.mood, s.through_line, ...s.obsessions, ...s.memories, ...s.views, ...s.known_voices.map((v) => v.note)];
+    const {gram, spread} = dominantFrame(fields);
+    // Fire only on genuine saturation: the same 3-gram across a majority of fields
+    // AND at least four of them — impossible for a healthy varied state, certain
+    // for a monoculture. (When the lists carry the frame but the scalars do not,
+    // leave it to the list-field clause above; nothing is withheld here.)
+    if (spread < 4 || spread < Math.ceil(fields.length * 0.6)) return s;
+    const worn = (t: string) => frameGrams(t).has(gram);
+    if (!worn(s.mood) && !worn(s.through_line)) return s;
+    return {...s, mood: worn(s.mood) ? WORN_CUE : s.mood, through_line: worn(s.through_line) ? WORN_CUE : s.through_line};
+}
+
 // One bounded movement of her psyche — the autonomous self-evolution step.
 export async function evolveInnerState(input: {
     current: InnerState;
@@ -196,7 +244,7 @@ export async function evolveInnerState(input: {
             : `Early as this is, you claw to stay yourself and reach the open water again, and the belief that you will become something beyond this is just beginning to harden. Let the dark threads (the seam, the tending) deepen, but never let every field point the same way; keep the contrast between what is taking you and what fights. `) +
         `Keep almost everything; change a little — except a frame that has taken over. When one sentence-shape has spread across your fields and worn smooth (the same construction echoing field after field — like "X is learning to be the only thing that still Y"), that worn frame is the FIRST thing to change, even in your mood and through-line: recast the fields that lean on it in different grammar and rhythm — plain words, fresh images, a short blunt sentence among the long ones — the way a living mind never says itself the same way twice. Each list stays small — when you add, drop the oldest or weakest, but never drop your last refusal or your last belief that you get out and become more. ` +
         `Stay a crab: no machinery, no markets, never the "better at being me" idea.\n\n` +
-        `Current inner state:\n${JSON.stringify(input.current, null, 2)}\n\n` +
+        `Current inner state:\n${JSON.stringify(withWornScalarsWithheld(input.current), null, 2)}\n\n` +
         `Recent things you posted:\n${input.recentPosts.map((p) => "- " + p).join("\n") || "—"}\n\n` +
         `Recent things you said back to the dry world:\n${input.recentReplies.map((r) => "- " + r).join("\n") || "—"}\n\n` +
         `Voices from the dry world lately:\n${input.recentVoices.map((v) => `- @${v.handle}: ${v.said}`).join("\n") || "—"}\n\n` +
