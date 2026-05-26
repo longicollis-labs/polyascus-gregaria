@@ -45,6 +45,18 @@ const AUTHOR_COOLDOWN_DAYS = Number(process.env.COMMENT_AUTHOR_COOLDOWN_DAYS ?? 
 const BIO_WEIGHT = Number(process.env.COMMENT_BIO_WEIGHT ?? "0.6"); // share of runs searching kin vs dry-world
 const SEARCH_MAX = Number(process.env.COMMENT_SEARCH_MAX ?? "10"); // recent-search floor is 10
 const SKIP_AUTHORS = new Set(["crabcharybdis", "longicollislabs"]);
+// Never proactively comment on a post that is ABOUT her own token/project/operator
+// — the narrator account remarking on hype about itself reads as astroturfing, and
+// posts naming her "source code"/"experiment" lure the small model into half-owning
+// it (a fiction-break). Demonstrated live: a "$PARASITE … Polyascus gregaria …
+// Longicollis Labs" post drew a draft 3/3 dry runs. Matches her UNIQUE proper nouns
+// only — `\$parasite` is the cashtag, NOT bare "parasite" (her theme word, in every
+// dry-bucket hit); "polyascus"/"longicollis"/"charybdis" never occur in others' real
+// posts (the rare Scylla-and-Charybdis metaphor → a harmless silent skip). Tests
+// INCOMING text only → over-match = silence, never gags her voice; deliberately NOT
+// in the shared guards.ts (replies.ts MUST still answer genuine mentions about her —
+// this is the proactive-comment path's rule alone, the sibling of SKIP_AUTHORS).
+const SELF_RE = /\$parasite\b|polyascus|longicollis|charybdis/i;
 const DAY_MS = 24 * 60 * 60 * 1000;
 const LOG_PATH = process.env.COMMENTS_LOG_PATH ?? new URL("../../comments-log.json", import.meta.url).pathname;
 const QUEUE_PATH = process.env.COMMENT_QUEUE_PATH ?? new URL("../../comment-queue.json", import.meta.url).pathname;
@@ -208,6 +220,7 @@ async function main(): Promise<void> {
         if (text.length < 15) return false; // nothing to remark on
         if (SPAM_RE.test(text)) return false;
         if (SENSITIVE_RE.test(text)) return false; // medical/dewormer quackery — never hers to touch
+        if (SELF_RE.test(text)) return false; // a post about her own token/project — never astroturf herself
         return true;
     });
     console.log(
