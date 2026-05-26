@@ -42,14 +42,16 @@ export async function decide(input: AgentInput, inner = ""): Promise<Decision> {
     const systemPrompt = readFileSync(SYSTEM_PROMPT_PATH, "utf8");
 
     let object: Decision | undefined;
-    let tripped: "tic" | "morning" | null = null;
+    let tripped: "tic" | "morning" | "epiphany" | null = null;
     for (let attempt = 0; attempt < 3; attempt++) {
         const nudge =
             tripped === "tic"
                 ? `\n\n(Your previous post used the BANNED "the parasite is better at being me / knows me better than myself" idea. Write a different beat that shows the takeover concretely — no "better", "knows me", "learning to be".)`
                 : tripped === "morning"
                   ? `\n\n(Your previous post opened on the "this morning" frame again — you lean on it in nearly every post and it reads like a template. Rewrite: drop "this morning" entirely and enter the beat differently — mid-motion, on a thought, on a view — with the time varied or left out.)`
-                  : "";
+                  : tripped === "epiphany"
+                    ? `\n\n(Your previous post pivoted on a colon-led epiphany again — "that is when I knew:", "and I realize:" — you lean on this realization-turn in nearly every post and it reads like a template. Rewrite: drop the stated realization entirely and let the change land in the images and the body themselves — a claw, the water, the shell — never a colon-led "that is when I knew / I realize" turn.)`
+                    : "";
         const res = await generateObject({
             model: anthropic(MODEL),
             schema: DecisionSchema,
@@ -64,6 +66,7 @@ export async function decide(input: AgentInput, inner = ""): Promise<Decision> {
         const text = object.post_text || "";
         if (REPLY_TIC.test(text)) tripped = "tic";
         else if (MORNING_TIC.test(text)) tripped = "morning";
+        else if (EPIPHANY_TIC.test(text)) tripped = "epiphany";
         else break;
     }
 
@@ -80,6 +83,16 @@ const REPLY_TIC =
 // model falls into post after post ("I tried to … this morning"). It reads as a
 // template, not a living mind; banned in posts and regenerated, like the tic.
 const MORNING_TIC = /\bthis morning\b/i;
+
+// The colon-led epiphany pivot — "That is when I knew: …", "and I realize: …" —
+// the realization-turn the small model falls into post after post (13 of 95 so
+// far, clustered as the inner state collapses). Like the morning frame it reads
+// as a template, not a living mind, and the prompt's "never lean on the same
+// construction" doesn't hold it on the small model — so it is banned in posts and
+// regenerated. Colon-anchored, so it catches only the dramatic pivot and never a
+// plain "I realize" / "the moment I …" in passing (a forced regenerate cleanly
+// drops it and reaches the beat through images instead — verified before shipping).
+const EPIPHANY_TIC = /\b(?:that is (?:when|the moment) i (?:knew|know)|i realiz(?:e|ed))\s*:/i;
 
 // She answers a creature from the dry world — in character, one or two lines.
 // `remembered` is set when this voice is one she has already clocked (from her
