@@ -9,8 +9,10 @@ services:
     runtime: node
     plan: starter
     schedule: "*/5 * * * *"
-    # --include=dev so tsx (a devDependency) installs even under NODE_ENV=production.
-    buildCommand: "cd agent && npm ci --include=dev --no-audit --no-fund"
+    # npm install (not ci) — tolerates the platform's optional native deps
+    # (bufferutil/utf-8-validate) that the committed lock omits; --include=dev so
+    # tsx (a devDependency) installs even under NODE_ENV=production.
+    buildCommand: "cd agent && npm install --include=dev --no-audit --no-fund"
     startCommand: "bash agent/render-tick.sh"
     envVars:
       - key: GH_TOKEN
