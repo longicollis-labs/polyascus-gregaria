@@ -11,7 +11,10 @@ Independently of that life cycle, a second immutable program — the infection �
 records the host's colonisation: seven irreversible stages, advanced not by
 elapsed time but by the cumulative SOL fed into it (routed from trading fees).
 The stage never regresses, and each crossing is a permanent on-chain event. This
-is the live spine, and it is what Charybdis narrates.
+is the live spine, and it is what Charybdis narrates: a pure in-character crab who
+fights the colonisation rather than submits to it, and who holds — harder the
+deeper it runs — that she will outlast it and become something it never meant to
+make and cannot hold. She does not break character or name the mechanics.
 
 Site — [polyascus.com](https://polyascus.com)
 Field record — [@CrabCharybdis](https://x.com/CrabCharybdis)
