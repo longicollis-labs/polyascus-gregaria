@@ -75,18 +75,20 @@ export async function decide(input: AgentInput, inner = ""): Promise<Decision> {
         else break;
     }
 
-    // Enforce the 280 limit HERE, not in the schema: a long generation must be
-    // trimmed (to her last complete sentence, else trailed off), never thrown away
-    // — a schema .max(280) made generateObject fail outright when she ran over,
-    // and a graceful silent cycle ate the post. Mirrors the reply/comment paths.
-    const post = (object!.post_text || "").trim();
+    // Strip the markdown the small model adds (X renders `*Polyascus*` literally, as
+    // the stars), then enforce the 280 limit HERE, not in the schema: a long
+    // generation must be trimmed (to her last complete sentence, else trailed off),
+    // never thrown away — a schema .max(280) made generateObject fail outright when
+    // she ran over, and a graceful silent cycle ate the post. Mirrors reply/comment.
+    let post = stripMarks((object!.post_text || "").trim());
     if (post.length > 280) {
         const capped = post.slice(0, 280);
         const ends = [...capped.matchAll(/[.!?](?=\s|$)/g)];
-        object!.post_text = ends.length
+        post = ends.length
             ? capped.slice(0, ends[ends.length - 1]!.index! + 1).trim()
             : capped.slice(0, capped.lastIndexOf(" ")).trim() + "…";
     }
+    object!.post_text = post;
     return object!;
 }
 
@@ -154,7 +156,8 @@ export async function replyToMention(input: {mention: string; author: string; st
                   `knowing you better than yourself. Rewrite completely — show the takeover through concrete body or sensation ` +
                   `(a claw moving before you decide, a want that arrived without you), and do NOT use the words "better", "knows me", "knows you", or "learning to be".`;
         const {text} = await generateText({model: anthropic(MODEL), system: systemPrompt, prompt: base + nudge, maxRetries: 2});
-        reply = text.trim().replace(/^["']+|["']+$/g, "");
+        // Strip markdown (X shows `*word*` literally) before the length cap, like decide/comment.
+        reply = stripMarks(text.trim().replace(/^["']+|["']+$/g, ""));
         // Keep within X's limit by ending on her last complete sentence, not a
         // mid-word chop that strands a fragment ("…the cage had") reading as
         // broken. If she ran on with no sentence break in the cap, let it trail
@@ -181,9 +184,9 @@ const CommentSchema = z.object({
 });
 
 // Strip markdown the small model sometimes adds — X renders it literally, so
-// `*faster*` would post as "*faster*". Unwrap emphasis, keep the words. (Comments
-// post via c.v2.reply, so they carry their own strip; the posting path's lives
-// elsewhere.)
+// `*faster*` would post as "*faster*". Unwrap emphasis, keep the words. Applied to
+// EVERY outgoing surface — posts (decide), replies (replyToMention), and comments
+// (commentOnPost) — so no stray stars ever reach X.
 const stripMarks = (s: string) =>
     s
         .replace(/(\*\*\*|___)([^\s].*?[^\s]|\S)\1/g, "$2")
