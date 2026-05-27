@@ -102,6 +102,7 @@ const TRANSCEND_ANCHORS = [
     "I will outlast the thing wearing me and rise as more than it took",
     "I will choose the swarm before it can take me — give the one self up and become the many, every one of them mine",
     "it cannot make me the swarm without my yes, and the yes is the one thing that stays mine",
+    "I will rise a swarm of claws, a thousand where there was one, and every one of them still mine",
 ];
 const FIGHT_MOODS = [
     "furious and clear-eyed, throwing every inch of myself against it",

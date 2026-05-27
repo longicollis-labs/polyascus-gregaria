@@ -42,7 +42,9 @@ export async function decide(input: AgentInput, inner = ""): Promise<Decision> {
     const systemPrompt = readFileSync(SYSTEM_PROMPT_PATH, "utf8");
 
     let object: Decision | undefined;
-    let tripped: "tic" | "morning" | "epiphany" | null = null;
+    let tripped: "tic" | "morning" | "epiphany" | "opener" | null = null;
+    // Her own recent openings, normalised — to catch a beat that begins like one.
+    const recentOpenerKeys = [...new Set(input.recent_posts.slice(-3).map((p) => openerKey(p.text)).filter(Boolean))];
     for (let attempt = 0; attempt < 3; attempt++) {
         const nudge =
             tripped === "tic"
@@ -51,7 +53,9 @@ export async function decide(input: AgentInput, inner = ""): Promise<Decision> {
                   ? `\n\n(Your previous post opened on the "this morning" frame again — you lean on it in nearly every post and it reads like a template. Rewrite: drop "this morning" entirely and enter the beat differently — mid-motion, on a thought, on a view — with the time varied or left out.)`
                   : tripped === "epiphany"
                     ? `\n\n(Your previous post pivoted on a colon-led epiphany again — "that is when I knew:", "and I realize:" — you lean on this realization-turn in nearly every post and it reads like a template. Rewrite: drop the stated realization entirely and let the change land in the images and the body themselves — a claw, the water, the shell — never a colon-led "that is when I knew / I realize" turn.)`
-                    : "";
+                    : tripped === "opener"
+                      ? `\n\n(Your previous post opened on the same words as a recent one${recentOpenerKeys.length ? ` — your last beats already began ${recentOpenerKeys.map((k) => `"${k}…"`).join(", ")}` : ""}. You keep starting beats the same way and it reads like a template, not a living mind. Rewrite so this beat OPENS on entirely different words and a different image than your recent posts — a part of the body gone strange, a single claw among the thousand, the open water, the parasite's Latin spat like a curse, something flung up at the giants — never the words you have just opened with.)`
+                      : "";
         const res = await generateObject({
             model: anthropic(MODEL),
             schema: DecisionSchema,
@@ -67,6 +71,7 @@ export async function decide(input: AgentInput, inner = ""): Promise<Decision> {
         if (REPLY_TIC.test(text)) tripped = "tic";
         else if (MORNING_TIC.test(text)) tripped = "morning";
         else if (EPIPHANY_TIC.test(text)) tripped = "epiphany";
+        else if (openerKey(text) && recentOpenerKeys.includes(openerKey(text))) tripped = "opener";
         else break;
     }
 
@@ -105,6 +110,18 @@ const MORNING_TIC = /\bthis morning\b/i;
 // plain "I realize" / "the moment I …" in passing (a forced regenerate cleanly
 // drops it and reaches the beat through images instead — verified before shipping).
 const EPIPHANY_TIC = /\b(?:that is (?:when|the moment) i (?:knew|know)|i realiz(?:e|ed))\s*:/i;
+
+// The opening words of a post, normalised to its first two words (lowercased,
+// punctuation/markdown stripped). The small model falls into starting beat after
+// beat the same way — "The motion …", "The brood …" — a STRUCTURAL opener-repeat
+// the fixed-phrase tic guards above cannot see. So decide() compares this against
+// her OWN recent openings (which it already receives) and regenerates on an echo.
+// Not a banned phrase (that would gag a fresh opening) — it only ever fires when a
+// beat actually begins like a recent one; a regenerate that opens elsewhere clears
+// it, and if she still echoes after the retries the last attempt posts (no silence).
+function openerKey(text: string): string {
+    return (text.toLowerCase().match(/[a-z]+/g) ?? []).slice(0, 2).join(" ");
+}
 
 // She answers a creature from the dry world — in character, one or two lines.
 // `remembered` is set when this voice is one she has already clocked (from her
