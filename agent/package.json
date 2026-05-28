@@ -13,6 +13,7 @@
     "comment": "tsx src/comment.ts",
     "comment-dry": "DRY_RUN=1 tsx src/comment.ts",
     "test-prompt": "tsx scripts/test-prompt.ts",
+    "swarm-dry": "tsx scripts/swarm-dry.ts",
     "typecheck": "tsc --noEmit"
   },
   "engines": {
