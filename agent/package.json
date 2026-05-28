@@ -14,6 +14,7 @@
     "comment-dry": "DRY_RUN=1 tsx src/comment.ts",
     "test-prompt": "tsx scripts/test-prompt.ts",
     "swarm-dry": "tsx scripts/swarm-dry.ts",
+    "ab-swarm": "tsx scripts/ab-swarm.ts",
     "typecheck": "tsc --noEmit"
   },
   "engines": {
