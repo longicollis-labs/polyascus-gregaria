@@ -1324,6 +1324,27 @@ ol.footnotes li:target {
     font-style: italic;
 }
 
+.scrip-jump {
+    margin: 18px 0 0;
+    padding-top: 14px;
+    border-top: 1px solid var(--rule-soft);
+    font-family: var(--sans);
+    font-size: 13px;
+    font-style: normal;
+    letter-spacing: 0.01em;
+    text-align: right;
+}
+
+.scrip-jump a {
+    color: var(--accent);
+    text-decoration: none;
+    border-bottom: 1px solid var(--taupe);
+}
+
+.scrip-jump a:hover {
+    border-bottom-color: var(--accent);
+}
+
 /* ── Footer ─────────────────────────────────────────────────────────────── */
 
 .page-footer {
