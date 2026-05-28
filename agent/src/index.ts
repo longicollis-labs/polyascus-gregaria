@@ -1,11 +1,15 @@
 import {DRY_RUN} from "./constants.js";
 import {appendLog, readLog, recentPosts, secondsSince, type LogEntry} from "./log.js";
-import {decide, type AgentInput} from "./llm.js";
+import {decide, type AgentInput, type Decision} from "./llm.js";
 import {readStage, STAGE_NAMES} from "./infection.js";
 import {readVitals} from "./state.js";
 import {postTweet} from "./x.js";
 import {readFileSync, existsSync} from "node:fs";
 import {loadInnerState, saveInnerState, evolveInnerState, renderInner} from "./inner.js";
+import {ARCHETYPES} from "./swarm/archetypes.js";
+import {claw} from "./swarm/claw.js";
+import {deliberate} from "./swarm/deliberate.js";
+import {host} from "./swarm/host.js";
 
 // Most recent market cap recorded in the log, for the brood-motion signal.
 function lastMcap(log: LogEntry[]): number | null {
@@ -95,7 +99,28 @@ async function main(): Promise<void> {
     }
 
     const inner = loadInnerState();
-    const decision = await decide(input, renderInner(inner));
+    const innerRendered = renderInner(inner);
+
+    // Stridulation T-005: when SWARM_ENABLED=1, route the post through the
+    // claw-swarm (N claws → deliberate → host curator). Default OFF — the live
+    // posting path runs the single-LLM decide() unchanged until the operator
+    // flips it on, after T-007 swarm-dry + T-016 head-to-head taste-test pass.
+    // N is the number of claws (default 3; T-015 will scale toward 12).
+    let decision: Decision;
+    if (process.env.SWARM_ENABLED === "1") {
+        const n = Math.max(1, Math.min(parseInt(process.env.SWARM_N ?? "3", 10) || 3, ARCHETYPES.length));
+        const archetypes = ARCHETYPES.slice(0, n);
+        const drafts = await Promise.all(archetypes.map((a) => claw(a, input, innerRendered)));
+        const {elected, dissent} = deliberate(drafts, {recent_posts: input.recent_posts, stage: input.stage});
+        const hostResult = await host({input, inner: innerRendered, elected, dissent});
+        decision = hostResult.decision;
+        console.log(
+            `swarm: N=${n} elected=${elected.archetype_id} host_tripped=[${hostResult.tripped.join(",")}] ` +
+                `ms=${hostResult.ms} tokens=${hostResult.tokens}`,
+        );
+    } else {
+        decision = await decide(input, innerRendered);
+    }
     console.log("decision:", decision);
 
     // She is a narrator; she does not act on-chain. Claims/feeds are operator-run.
