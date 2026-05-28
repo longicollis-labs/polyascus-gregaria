@@ -22,6 +22,37 @@ export type LogEntry = {
         lifetime_seconds: number;
         is_dead: boolean;
     };
+    // Stridulation T-006: optional swarm deliberation metadata. Present only on
+    // runs where SWARM_ENABLED=1 wired through claw → deliberate → host. Absent
+    // (JSON.stringify drops undefined keys) on single-LLM runs — so this field
+    // is purely additive. The scriptorium (T-008/T-009) reads it for per-post
+    // permalinks; the receipt hash (T-011) hashes the canonical sub-fields.
+    // `tripped` strings are the canonical HostResult.tripped values
+    // ("tic" | "morning" | "epiphany" | "opener"); kept as string[] here so
+    // log.ts stays independent of the swarm layer.
+    swarm?: {
+        n: number;
+        elected_archetype_id: string;
+        drafts: {
+            archetype_id: string;
+            post_text: string;
+            ms: number;
+            tokens: number;
+        }[];
+        scores: {
+            archetype_id: string;
+            total: number;
+            freshness: number;
+            affinity: number;
+            length_fit: number;
+            tic_pass: boolean;
+        }[];
+        host: {
+            ms: number;
+            tokens: number;
+            tripped: string[];
+        };
+    };
 };
 
 export function readLog(): LogEntry[] {

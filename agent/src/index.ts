@@ -107,13 +107,30 @@ async function main(): Promise<void> {
     // flips it on, after T-007 swarm-dry + T-016 head-to-head taste-test pass.
     // N is the number of claws (default 3; T-015 will scale toward 12).
     let decision: Decision;
+    // Stridulation T-006: when SWARM_ENABLED=1, capture the deliberation for
+    // the log so the scriptorium (T-008/T-009) and receipt hash (T-011) have
+    // the per-post claws + elected + host metadata. Stays undefined on the
+    // single-LLM path, and JSON.stringify drops undefined keys → additive.
+    let swarmMeta: LogEntry["swarm"] = undefined;
     if (process.env.SWARM_ENABLED === "1") {
         const n = Math.max(1, Math.min(parseInt(process.env.SWARM_N ?? "3", 10) || 3, ARCHETYPES.length));
         const archetypes = ARCHETYPES.slice(0, n);
         const drafts = await Promise.all(archetypes.map((a) => claw(a, input, innerRendered)));
-        const {elected, dissent} = deliberate(drafts, {recent_posts: input.recent_posts, stage: input.stage});
+        const {elected, dissent, scores} = deliberate(drafts, {recent_posts: input.recent_posts, stage: input.stage});
         const hostResult = await host({input, inner: innerRendered, elected, dissent});
         decision = hostResult.decision;
+        swarmMeta = {
+            n,
+            elected_archetype_id: elected.archetype_id,
+            drafts: drafts.map((d) => ({
+                archetype_id: d.archetype_id,
+                post_text: d.decision.post_text ?? "",
+                ms: d.ms,
+                tokens: d.tokens,
+            })),
+            scores,
+            host: {ms: hostResult.ms, tokens: hostResult.tokens, tripped: [...hostResult.tripped]},
+        };
         console.log(
             `swarm: N=${n} elected=${elected.archetype_id} host_tripped=[${hostResult.tripped.join(",")}] ` +
                 `ms=${hostResult.ms} tokens=${hostResult.tokens}`,
@@ -158,6 +175,7 @@ async function main(): Promise<void> {
             lifetime_seconds: vitals.lifetime_seconds,
             is_dead: vitals.is_dead,
         },
+        swarm: swarmMeta,
     });
 
     // Self-evolution: nudge her inner state one bounded step from this cycle.
