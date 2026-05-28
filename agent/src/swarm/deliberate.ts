@@ -8,7 +8,7 @@
 //
 // Scoring components, each in [0,1]:
 //   • freshness  — 1.0 if this draft's opening 2 words don't echo any of her
-//                  last 3 recent posts, 0.0 if they do. Same openerKey() the
+//                  last 6 recent posts, 0.0 if they do. Same openerKey() the
 //                  live decide() uses, so the swarm and the single-LLM path
 //                  agree on what counts as a repeat.
 //   • affinity   — per (archetype, stage) lookup in [0,1]. Defaults to 0.5
@@ -46,7 +46,7 @@ export type Score = {
     archetype_id: string;
     /** freshness + affinity + length_fit, or -1 when tic_pass is false. */
     total: number;
-    /** 1.0 if this draft's opener doesn't echo any of her last 3 posts, else 0.0. */
+    /** 1.0 if this draft's opener doesn't echo any of her last 6 posts, else 0.0. */
     freshness: number;
     /** Per (archetype, stage) affinity in [0,1]. Default 0.5. */
     affinity: number;
@@ -75,7 +75,7 @@ export function deliberate(drafts: readonly ClawDraft[], ctx: DeliberateContext)
 
     // Her own recent openings, mirror of decide()'s recentOpenerKeys.
     const recentOpenerKeys = new Set(
-        ctx.recent_posts.slice(-3).map((p) => openerKey(p.text)).filter(Boolean),
+        ctx.recent_posts.slice(-6).map((p) => openerKey(p.text)).filter(Boolean),
     );
 
     // Score every draft. Iterate input order so callers can map back; the
