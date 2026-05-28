@@ -101,7 +101,7 @@ export const REPLY_TIC =
 // The "this morning" opener — the timestamped morning-ritual frame the small
 // model falls into post after post ("I tried to … this morning"). It reads as a
 // template, not a living mind; banned in posts and regenerated, like the tic.
-const MORNING_TIC = /\bthis morning\b/i;
+export const MORNING_TIC = /\bthis morning\b/i;
 
 // The colon-led epiphany pivot — "That is when I knew: …", "and I realize: …" —
 // the realization-turn the small model falls into post after post (13 of 95 so
@@ -111,7 +111,7 @@ const MORNING_TIC = /\bthis morning\b/i;
 // regenerated. Colon-anchored, so it catches only the dramatic pivot and never a
 // plain "I realize" / "the moment I …" in passing (a forced regenerate cleanly
 // drops it and reaches the beat through images instead — verified before shipping).
-const EPIPHANY_TIC = /\b(?:that is (?:when|the moment) i (?:knew|know)|i realiz(?:e|ed))\s*:/i;
+export const EPIPHANY_TIC = /\b(?:that is (?:when|the moment) i (?:knew|know)|i realiz(?:e|ed))\s*:/i;
 
 // The opening words of a post, normalised to its first two words (lowercased,
 // punctuation/markdown stripped). The small model falls into starting beat after
@@ -121,7 +121,7 @@ const EPIPHANY_TIC = /\b(?:that is (?:when|the moment) i (?:knew|know)|i realiz(
 // Not a banned phrase (that would gag a fresh opening) — it only ever fires when a
 // beat actually begins like a recent one; a regenerate that opens elsewhere clears
 // it, and if she still echoes after the retries the last attempt posts (no silence).
-function openerKey(text: string): string {
+export function openerKey(text: string): string {
     return (text.toLowerCase().match(/[a-z]+/g) ?? []).slice(0, 2).join(" ");
 }
 
