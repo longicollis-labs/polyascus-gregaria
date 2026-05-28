@@ -1,10 +1,11 @@
 // Run with: npm run swarm-dry
 // Requires ANTHROPIC_API_KEY in env. Hits the real Anthropic API.
-// Stridulation T-007 — the operator's verification path before flipping
-// SWARM_ENABLED=1 in production. Runs the claw-swarm at N=3 on a fixed
-// fixture input + inner state, prints every claw draft, the deliberation
-// scores, the elected line, the host polish, and a gate report (FORBIDDEN
-// sweep, 280-cap, silent-host check). Exits non-zero on any gate issue.
+// Stridulation T-007 / T-015 — the operator's verification path before
+// flipping SWARM_ENABLED=1 in production. Runs the claw-swarm at the full
+// N=12 (the M1 W4 operating point) on a fixed fixture input + inner state,
+// prints every claw draft, the deliberation scores, the elected line, the
+// host polish, and a gate report (FORBIDDEN sweep, 280-cap, silent-host
+// check). Exits non-zero on any gate issue. Override with SWARM_N=<1..12>.
 //
 // Fixture is release-stage (the live stage as of M1 W1) carrying her
 // canonical claw-swarm / choose-the-swarm voice; the recent_posts pin the
@@ -19,7 +20,7 @@ import {deliberate} from "../src/swarm/deliberate.js";
 import {host} from "../src/swarm/host.js";
 import type {AgentInput} from "../src/llm.js";
 
-const N = Math.max(1, Math.min(parseInt(process.env.SWARM_N ?? "3", 10) || 3, ARCHETYPES.length));
+const N = Math.max(1, Math.min(parseInt(process.env.SWARM_N ?? "12", 10) || 12, ARCHETYPES.length));
 
 const ago = (mins: number) => new Date(Date.now() - mins * 60_000).toISOString();
 
