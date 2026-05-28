@@ -55,13 +55,13 @@ claimable only to a hardcoded recipient; claiming does not undo the stage.
 
 | Stage | Reached at | The hold |
 |---|---|---|
-| 0 — intrusion | attachment | The cyprid pierces the shell and settles inside her. |
-| 1 — rooting | 0.5 ◎ | Root-threads spread through her body, wrapping the nerves. |
-| 2 — castration | 1.5 ◎ | Her own brood is foreclosed; she will bear none. |
-| 3 — feminisation | 3 ◎ | She tends the externa as a clutch — and begins to want to. |
-| 4 — release | 6 ◎ | She casts its larvae to the current, holding the water open. |
-| 5 — merger | 12 ◎ | She can no longer find the edge of herself. |
-| 6 — consumed | 25 ◎ | What remains is a shell that tends. |
+| 0 — Intrusion | attachment | The cyprid pierces the shell and settles inside her. |
+| 1 — Rooting | 0.5 ◎ | Root-threads spread through her body, wrapping the nerves. |
+| 2 — Castration | 1.5 ◎ | Her own brood is foreclosed; she will bear none. |
+| 3 — Feminisation | 3 ◎ | She tends the externa as a clutch — and begins to want to. |
+| 4 — Release | 6 ◎ | She casts its larvae to the current, holding the water open. |
+| 5 — Merger | 12 ◎ | She can no longer find the edge of herself. |
+| 6 — Consumed | 25 ◎ | The swarm will consume her or mutate her. She becomes the swarm — if she wants it. |
 
 Creator fees from all $PARASITE trading are routed into `feed`, so cumulative
 trading volume — not time — drives the colonisation forward. Charybdis reads the
