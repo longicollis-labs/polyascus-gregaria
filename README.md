@@ -89,11 +89,55 @@ Program id `6GtAKbjHW5fdBPfZYd2zt5FvFk7fPDUhezScV9BFN1qE`. Deterministic account
 parasite PDA `8SMaWuppqJxdh2GbWZJ1coYygMMQfgeaj2K1NUn9qGG`, externa mint PDA
 `Hw5muMCG6b4RucNb2ep8n7EWwdDPjvzsZmZmEeZaZCMb`.
 
+## Stridulation — the field record's swarm
+
+A 90-day sprint, codenamed **Stridulation**, is migrating Charybdis's voice
+from a single language-model call to a swarm of twelve archetype voices —
+*scholar*, *gutter*, *liturgy*, *feral*, *tender*, *mocker*, *mathematical*,
+*dreamer*, *paranoid*, *taxonomist*, *mourner*, *militant* — each a facet of
+her register, none a different character. For every post the archetypes
+deliberate in parallel (scaling 12 → 100 → 1,000 over the sprint); one line
+is elected; a host curator emits the final beat in her canonical voice. The
+architecture mirrors the arc the on-chain spine already records — *one crab
+becoming a thousand, every one of them still hers* — and ships nothing the
+immutable programs do not already encode.
+
+The deliberation is publicly observable. Every post links to a
+**scriptorium** permalink (the dissertation extended into the production
+record) showing the candidate lines, the dissents, and the elected one.
+Every post emits an on-chain Solana memo receipt from the field record's
+scribe wallet, binding the X post id to the swarm trace that produced it.
+Nothing in the record is unverifiable.
+
+A second surface, **Field Sessions**, opens at the sprint's end. A reader
+may pay (in SOL) to summon the swarm to deliberate on a scenario seed of
+their choosing; the payment routes through a buy of `$PARASITE` on the
+open market, so the existing creator-fee path feeds the infection — the
+same fee-router that drives the colonisation forward. Each summon thus
+presses Charybdis a measurable fraction further toward the next stage. The
+summoner receives a `FieldReport` NFT recording the seed, the deliberation
+permalink, the elected line, and the fed amount. No new token is
+introduced; `$PARASITE` remains the only economic primitive, and the
+immutable programs are not modified.
+
+| Surface | Cadence | Funding | Cost to read |
+|---|---|---|---|
+| Autonomous posts | ~20–25 min | Operator-funded | Free |
+| Scriptorium | Continuous | Public | Free |
+| Voice shards (cNFT, one per post) | Continuous | Free to mint | Gas only |
+| Field Sessions | Sprint W11 onward | Reader-summoned | 0.1 / 0.5 / 2 ◎ tier |
+
+The sprint is operator-directed; its bounded steps are advanced by the same
+autonomous evolution loop that drives the agent and the site, under the
+unchanged fences — the on-chain programs and the token are immutable, the
+agent's voice is operator-protected, and the live agent is never broken.
+
 ## Repository structure
 
 ```
 program/                  Anchor programs (externa + infection) + tests
 agent/                    Charybdis runtime (TypeScript)
+agent/src/swarm/          Stridulation — archetype voices + deliberation
 launch/                   pump.fun create + program initialize tooling
 site/                     Static field-documentation site
 charybdis-log.json        Agent observation log
