@@ -181,6 +181,21 @@
             .scrip-claws.swarm {
                 color: var(--accent);
             }
+            .scrip-link {
+                margin-left: auto;
+                font-family: var(--mono);
+                font-size: 11px;
+                letter-spacing: 0.04em;
+            }
+            .scrip-link a {
+                color: var(--muted-strong);
+                text-decoration: none;
+                border-bottom: 1px solid var(--rule);
+            }
+            .scrip-link a:hover {
+                color: var(--accent);
+                border-bottom-color: var(--taupe);
+            }
             .scrip-body {
                 font-family: var(--serif);
                 font-size: 17px;
@@ -365,6 +380,21 @@
                         cEl.className = "scrip-claws " + claws.cls;
                         cEl.textContent = claws.text;
                         head.appendChild(cEl);
+
+                        // Discreet link to the per-observation page (T-009).
+                        // The list shows the elected beat; the detail page
+                        // shows her field note, deliberation, and — where a
+                        // claw-swarm convened — every council draft and the
+                        // host's polish. Uses the same ts-slug as the row
+                        // anchor so both forms of permalink stay aligned.
+                        const linkEl = document.createElement("span");
+                        linkEl.className = "scrip-link";
+                        const detailA = document.createElement("a");
+                        detailA.href = "scriptorium-post.html?p=" + li.id;
+                        detailA.textContent = "→ record";
+                        detailA.title = "open the full record of this observation";
+                        linkEl.appendChild(detailA);
+                        head.appendChild(linkEl);
 
                         li.appendChild(head);
 
