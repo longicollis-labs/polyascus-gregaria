@@ -187,7 +187,7 @@ const CommentSchema = z.object({
 // `*faster*` would post as "*faster*". Unwrap emphasis, keep the words. Applied to
 // EVERY outgoing surface — posts (decide), replies (replyToMention), and comments
 // (commentOnPost) — so no stray stars ever reach X.
-const stripMarks = (s: string) =>
+export const stripMarks = (s: string) =>
     s
         .replace(/(\*\*\*|___)([^\s].*?[^\s]|\S)\1/g, "$2")
         .replace(/(\*\*|__)([^\s].*?[^\s]|\S)\1/g, "$2")
