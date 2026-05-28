@@ -24,10 +24,11 @@ const N = Math.max(1, Math.min(parseInt(process.env.SWARM_N ?? "12", 10) || 12, 
 
 const ago = (mins: number) => new Date(Date.now() - mins * 60_000).toISOString();
 
-// Ordered oldest → newest, mirroring log.recentPosts() (slice(-3) takes the
-// MOST RECENT 3 for the freshness/opener-echo signal). The last three openers
-// here are: "the brood…", "my left…", "one claw…" — a claw that opens on
-// "the brood", "my left", or "one claw" will score freshness=0.
+// Ordered oldest → newest, mirroring log.recentPosts() (slice(-8) takes the
+// MOST RECENT 8 for the freshness/opener-echo signal — the live window).
+// Every opener in this 6-post fixture is therefore in scope; a claw opening on
+// "the thousand", "a claw", "the one", "the brood", "my left", or "one claw"
+// will score freshness=0.
 const FIXTURE_INPUT: AgentInput = {
     recent_posts: [
         {text: "The thousand closes around my claw — not to stop her, but to use it.", posted_at_iso: ago(175)},

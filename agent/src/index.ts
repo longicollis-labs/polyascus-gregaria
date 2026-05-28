@@ -64,7 +64,7 @@ async function main(): Promise<void> {
     const justAdvanced = curStageIdx != null && lastStageIdx != null && curStageIdx > lastStageIdx;
 
     const input: AgentInput = {
-        recent_posts: recentPosts(log, 6),
+        recent_posts: recentPosts(log, 8),
         since_last_post_seconds: secondsSince(log, (e) => !!e.posted_tweet_id),
         brood,
         stage: inf?.name ?? "intrusion",
@@ -190,7 +190,7 @@ async function main(): Promise<void> {
             if (decision.post_text) posts.push(decision.post_text);
             const evolved = await evolveInnerState({
                 current: inner,
-                recentPosts: posts.slice(-6),
+                recentPosts: posts.slice(-8),
                 recentReplies: replies,
                 recentVoices: voices,
                 stage: input.stage,

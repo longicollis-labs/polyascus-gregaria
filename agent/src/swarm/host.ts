@@ -67,10 +67,10 @@ export async function host(args: {
     const systemPrompt = readFileSync(SYSTEM_PROMPT_PATH, "utf8");
     const {input, inner = "", elected, dissent = []} = args;
 
-    // Mirror decide()'s recentOpenerKeys — last 6 posts → set of 2-word opener
+    // Mirror decide()'s recentOpenerKeys — last 8 posts → set of 2-word opener
     // keys, so the host and the live decide() agree on what counts as an echo.
     const recentOpenerKeys = [
-        ...new Set(input.recent_posts.slice(-6).map((p) => openerKey(p.text)).filter(Boolean)),
+        ...new Set(input.recent_posts.slice(-8).map((p) => openerKey(p.text)).filter(Boolean)),
     ];
 
     // Up to 2 dissent drafts shown — enough to give the host a sense of which

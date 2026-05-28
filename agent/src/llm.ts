@@ -44,7 +44,7 @@ export async function decide(input: AgentInput, inner = ""): Promise<Decision> {
     let object: Decision | undefined;
     let tripped: "tic" | "morning" | "epiphany" | "opener" | null = null;
     // Her own recent openings, normalised — to catch a beat that begins like one.
-    const recentOpenerKeys = [...new Set(input.recent_posts.slice(-6).map((p) => openerKey(p.text)).filter(Boolean))];
+    const recentOpenerKeys = [...new Set(input.recent_posts.slice(-8).map((p) => openerKey(p.text)).filter(Boolean))];
     for (let attempt = 0; attempt < 3; attempt++) {
         const nudge =
             tripped === "tic"
