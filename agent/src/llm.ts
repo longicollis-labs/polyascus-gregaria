@@ -6,7 +6,7 @@ import {MODEL} from "./constants.js";
 
 const SYSTEM_PROMPT_PATH = new URL("../prompts/charybdis.md", import.meta.url).pathname;
 
-const DecisionSchema = z.object({
+export const DecisionSchema = z.object({
     observations: z.string().describe("Brief private note on where the change has reached. For the log."),
     deliberation: z
         .string()
