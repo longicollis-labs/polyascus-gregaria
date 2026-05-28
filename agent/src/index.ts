@@ -130,6 +130,10 @@ async function main(): Promise<void> {
             })),
             scores,
             host: {ms: hostResult.ms, tokens: hostResult.tokens, tripped: [...hostResult.tripped]},
+            // T-012: captured here so the scriptorium permalink can recompute
+            // the receipt hash client-side. Omitted when the chain read failed
+            // (inf is null) — the same condition that nulls stage_index.
+            fed_at_post: inf?.fed_sol,
         };
         console.log(
             `swarm: N=${n} elected=${elected.archetype_id} host_tripped=[${hostResult.tripped.join(",")}] ` +

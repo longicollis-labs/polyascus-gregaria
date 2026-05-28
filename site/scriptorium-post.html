@@ -248,6 +248,27 @@
                 padding: 16px 0 0;
             }
 
+            .receipt-block {
+                margin-top: 22px;
+                padding-top: 14px;
+                border-top: 1px dashed var(--rule);
+            }
+            .receipt-label {
+                font-family: var(--sans);
+                font-style: italic;
+                font-size: 12px;
+                color: var(--muted);
+                margin: 0 0 6px;
+            }
+            .receipt-hash {
+                font-family: var(--mono);
+                font-size: 11px;
+                color: var(--taupe-ink);
+                letter-spacing: 0.02em;
+                word-break: break-all;
+                margin: 0;
+            }
+
             @media (max-width: 640px) {
                 .obs-main {
                     padding: 36px 20px 64px;
@@ -314,6 +335,10 @@
                     <h3>Host polish</h3>
                     <p class="host-meta" id="host-meta"></p>
                 </div>
+                <div class="receipt-block" id="receipt-block" hidden>
+                    <p class="receipt-label">Receipt — what scribe.sol memos on-chain for this beat.</p>
+                    <p class="receipt-hash" id="receipt-hash"></p>
+                </div>
             </section>
 
             <p id="obs-status" class="obs-note">Loading observation…</p>
@@ -366,6 +391,67 @@
             // link from the scriptorium list ("?p=t-<slug>") resolves here.
             function tsSlug(iso) {
                 return "t-" + iso.replace(/[^0-9A-Za-z]/g, "");
+            }
+
+            // T-011/T-012 — V1 receipt canonical encoding. Mirrors
+            // agent/src/swarm/receipt.ts byte-for-byte so the SHA-256 here
+            // matches what scribe.sol will memo on-chain (T-013). Both sides
+            // must move together. Archetype IDs are ASCII so the localeCompare
+            // sort is locale-stable across Node and the browser.
+            const RECEIPT_VERSION = 1;
+            const INFERENCE_PROVIDER_V1 = "anthropic";
+
+            function canonicalizeReceipt(r) {
+                const claws = r.claws
+                    .slice()
+                    .sort((a, b) => a.archetype_id.localeCompare(b.archetype_id))
+                    .map((c) => ({archetype_id: c.archetype_id, post_text: c.post_text}));
+                return JSON.stringify({
+                    version: r.version,
+                    tick_id: r.tick_id,
+                    ts: r.ts,
+                    claws,
+                    elected_id: r.elected_id,
+                    host_post_id: r.host_post_id,
+                    inference_provider: r.inference_provider,
+                    infection_stage: r.infection_stage,
+                    fed_at_post: r.fed_at_post,
+                });
+            }
+
+            async function receiptHashHex(r) {
+                const bytes = new TextEncoder().encode(canonicalizeReceipt(r));
+                const buf = await crypto.subtle.digest("SHA-256", bytes);
+                return Array.from(new Uint8Array(buf))
+                    .map((b) => b.toString(16).padStart(2, "0"))
+                    .join("");
+            }
+
+            // Build a Receipt from a log entry, or null when the data needed
+            // to commit a hash isn't there (legacy single-LLM posts, or swarm
+            // runs where the chain read failed). Pre-T-013 the host_post_id
+            // is whatever X returned (may be null if the post failed); the
+            // hash still commits to that null deterministically.
+            function receiptFromEntry(entry) {
+                const swarm = entry && entry.swarm;
+                if (!swarm) return null;
+                if (typeof swarm.fed_at_post !== "number") return null;
+                if (!Number.isInteger(entry.stage_index)) return null;
+                if (!Array.isArray(swarm.drafts) || swarm.drafts.length === 0) return null;
+                return {
+                    version: RECEIPT_VERSION,
+                    tick_id: entry.ts,
+                    ts: entry.ts,
+                    claws: swarm.drafts.map((d) => ({
+                        archetype_id: d.archetype_id,
+                        post_text: d.post_text,
+                    })),
+                    elected_id: swarm.elected_archetype_id,
+                    host_post_id: entry.posted_tweet_id || null,
+                    inference_provider: INFERENCE_PROVIDER_V1,
+                    infection_stage: entry.stage_index,
+                    fed_at_post: swarm.fed_at_post,
+                };
             }
 
             function stageOf(entry) {
@@ -506,11 +592,36 @@
                     // identity for archive readers.
                     let entry = null;
                     let n = 0;
-                    for (let i = 0; i < posts.length; i++) {
-                        if (tsSlug(posts[i].ts) === slug) {
-                            entry = posts[i];
-                            n = i + 1;
-                            break;
+
+                    // Two anchor forms resolve to the same observation:
+                    //   ?p=t-<ts-slug>   — every entry; what scriptorium.html
+                    //                      links to (stable forever).
+                    //   ?p=<sha256-hex>  — swarm posts only; what scribe.sol
+                    //                      memos on-chain (T-013). A reader
+                    //                      arriving from the chain hits this
+                    //                      form; we walk the log and recompute
+                    //                      until the hash matches.
+                    const isHash = /^[0-9a-f]{64}$/i.test(slug);
+                    if (isHash) {
+                        const target = slug.toLowerCase();
+                        for (let i = 0; i < posts.length; i++) {
+                            const r = receiptFromEntry(posts[i]);
+                            if (!r) continue;
+                            // eslint-disable-next-line no-await-in-loop
+                            const h = await receiptHashHex(r);
+                            if (h === target) {
+                                entry = posts[i];
+                                n = i + 1;
+                                break;
+                            }
+                        }
+                    } else {
+                        for (let i = 0; i < posts.length; i++) {
+                            if (tsSlug(posts[i].ts) === slug) {
+                                entry = posts[i];
+                                n = i + 1;
+                                break;
+                            }
                         }
                     }
 
@@ -577,6 +688,17 @@
                     ) {
                         renderCouncil(swarm);
                         show("sec-council");
+
+                        const receipt = receiptFromEntry(entry);
+                        if (receipt) {
+                            try {
+                                const hash = await receiptHashHex(receipt);
+                                setText("receipt-hash", hash);
+                                show("receipt-block");
+                            } catch (err) {
+                                console.warn("receipt hash failed", err);
+                            }
+                        }
                     }
 
                     status.textContent = "";

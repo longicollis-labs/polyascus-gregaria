@@ -26,10 +26,15 @@ export type LogEntry = {
     // runs where SWARM_ENABLED=1 wired through claw → deliberate → host. Absent
     // (JSON.stringify drops undefined keys) on single-LLM runs — so this field
     // is purely additive. The scriptorium (T-008/T-009) reads it for per-post
-    // permalinks; the receipt hash (T-011) hashes the canonical sub-fields.
+    // permalinks; the receipt hash (T-011/T-012) hashes the canonical sub-fields.
     // `tripped` strings are the canonical HostResult.tripped values
     // ("tic" | "morning" | "epiphany" | "opener"); kept as string[] here so
     // log.ts stays independent of the swarm layer.
+    // `fed_at_post` is the cumulative SOL fed to the infection at post time,
+    // captured here so the scriptorium (T-012) can recompute the receipt hash
+    // client-side byte-for-byte against receipt.ts's canonical encoding.
+    // Undefined when the chain read failed at log-write time (rare — same
+    // condition that nulls `stage_index`); the client-side hash gates on it.
     swarm?: {
         n: number;
         elected_archetype_id: string;
@@ -52,6 +57,7 @@ export type LogEntry = {
             tokens: number;
             tripped: string[];
         };
+        fed_at_post?: number;
     };
 };
 
