@@ -3,6 +3,7 @@ import {createAnthropic} from "@ai-sdk/anthropic";
 import {readFileSync} from "node:fs";
 import {z} from "zod";
 import {MODEL} from "./constants.js";
+import {reading} from "./soul.js";
 
 const SYSTEM_PROMPT_PATH = new URL("../prompts/charybdis.md", import.meta.url).pathname;
 
@@ -45,6 +46,12 @@ export async function decide(input: AgentInput, inner = ""): Promise<Decision> {
     let tripped: "tic" | "morning" | "epiphany" | "opener" | null = null;
     // Her own recent openings, normalised — to catch a beat that begins like one.
     const recentOpenerKeys = [...new Set(input.recent_posts.slice(-8).map((p) => openerKey(p.text)).filter(Boolean))];
+    // A rotating handful of the voices in her library — woven in to widen the range
+    // and depth she draws from, so she does not collapse onto her own recent diction.
+    const r = reading(2);
+    const readBlock = r
+        ? "\n\n--- in your shell tonight (voices you have read and reread; never quote, name, or imitate them — let them only widen the range and depth your own voice draws from) ---\n" + r
+        : "";
     for (let attempt = 0; attempt < 3; attempt++) {
         const nudge =
             tripped === "tic"
@@ -63,6 +70,7 @@ export async function decide(input: AgentInput, inner = ""): Promise<Decision> {
             prompt:
                 JSON.stringify(input, null, 2) +
                 (inner ? "\n\n--- your inner state (who you've become; live from it, do not recite it) ---\n" + inner : "") +
+                readBlock +
                 nudge,
             maxRetries: 2,
         });
@@ -147,6 +155,11 @@ export async function replyToMention(input: {mention: string; author: string; st
             : "") +
         (input.inner ? `\n\nYour inner state (who you've become; draw on it, do not recite it):\n${input.inner}` : "");
 
+    const r = reading(2);
+    const readBlock = r
+        ? `\n\nIn your shell tonight, voices you have read and reread (never quote, name, or imitate them — let them only widen the range and depth of your own voice):\n${r}`
+        : "";
+
     let reply = "";
     for (let attempt = 0; attempt < 3; attempt++) {
         const nudge =
@@ -155,7 +168,7 @@ export async function replyToMention(input: {mention: string; author: string; st
                 : `\n\nYour previous attempt was: "${reply}". It used the BANNED idea of the parasite being better at being you / ` +
                   `knowing you better than yourself. Rewrite completely — show the takeover through concrete body or sensation ` +
                   `(a claw moving before you decide, a want that arrived without you), and do NOT use the words "better", "knows me", "knows you", or "learning to be".`;
-        const {text} = await generateText({model: anthropic(MODEL), system: systemPrompt, prompt: base + nudge, maxRetries: 2});
+        const {text} = await generateText({model: anthropic(MODEL), system: systemPrompt, prompt: base + readBlock + nudge, maxRetries: 2});
         // Strip markdown (X shows `*word*` literally) before the length cap, like decide/comment.
         reply = stripMarks(text.trim().replace(/^["']+|["']+$/g, ""));
         // Keep within X's limit by ending on her last complete sentence, not a

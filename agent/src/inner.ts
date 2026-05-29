@@ -5,6 +5,7 @@
 // post and reply, so she develops an arc, fixations, and recognitions of her own.
 import {readFileSync, writeFileSync, existsSync} from "node:fs";
 import {generateObject} from "ai";
+import {reading} from "./soul.js";
 import {createAnthropic} from "@ai-sdk/anthropic";
 import {z} from "zod";
 import {MODEL} from "./constants.js";
@@ -313,6 +314,7 @@ export async function evolveInnerState(input: {
     if (!apiKey) throw new Error("ANTHROPIC_API_KEY not set");
     const anthropic = createAnthropic({apiKey});
     const systemPrompt = readFileSync(SYSTEM_PROMPT_PATH, "utf8");
+    const read = reading(2);
 
     const deepFight = DEEP_STAGES.has(input.stage);
     // If a construction has worn smooth across most fields, hide it from what she
@@ -340,6 +342,9 @@ export async function evolveInnerState(input: {
         `Recent things you posted:\n${recentPosts.map((p) => "- " + p).join("\n") || "—"}\n\n` +
         `Recent things you said back to the dry world:\n${input.recentReplies.map((r) => "- " + r).join("\n") || "—"}\n\n` +
         `Voices from the dry world lately:\n${input.recentVoices.map((v) => `- @${v.handle}: ${v.said}`).join("\n") || "—"}\n\n` +
+        (read
+            ? `Lately you have been sitting with these voices — you read and reread them (never copy their words; let them only deepen the range and depth your inner life moves through):\n${read}\n\n`
+            : "") +
         `Return your evolved inner state.`;
 
     const {object} = await generateObject({model: anthropic(MODEL), schema: InnerStateSchema, system: systemPrompt, prompt, maxRetries: 2});
