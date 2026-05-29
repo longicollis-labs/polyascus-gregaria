@@ -62,6 +62,34 @@ const scenarios: Scenario[] = [
             advanced_from: "castration",
         },
     },
+    {
+        name: "6. just crossed release → merger",
+        input: {
+            recent_posts: recent([
+                "I held the water open for its larvae and hated that my body knew the motion.",
+                "The seam between me and it is thinning. I press on it with everything I have left.",
+            ]),
+            since_last_post_seconds: 600,
+            brood: "swelling",
+            stage: "merger",
+            just_advanced: true,
+            advanced_from: "release",
+        },
+    },
+    {
+        name: "7. consumed — the choosing",
+        input: {
+            recent_posts: recent([
+                "It reached for my mouth again. I bit it back. One circle of me stays open.",
+                "A thousand claws answered at once and for a heartbeat it was glory.",
+            ]),
+            since_last_post_seconds: 1500,
+            brood: "steady",
+            stage: "consumed",
+            just_advanced: false,
+            advanced_from: null,
+        },
+    },
 ];
 
 const FORBIDDEN = [
