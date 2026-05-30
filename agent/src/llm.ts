@@ -3,7 +3,7 @@ import {createAnthropic} from "@ai-sdk/anthropic";
 import {readFileSync} from "node:fs";
 import {z} from "zod";
 import {MODEL} from "./constants.js";
-import {reading} from "./soul.js";
+import {readingWith} from "./currents.js";
 
 const SYSTEM_PROMPT_PATH = new URL("../prompts/charybdis.md", import.meta.url).pathname;
 
@@ -48,7 +48,7 @@ export async function decide(input: AgentInput, inner = ""): Promise<Decision> {
     const recentOpenerKeys = [...new Set(input.recent_posts.slice(-8).map((p) => openerKey(p.text)).filter(Boolean))];
     // A rotating handful of the voices in her library — woven in to widen the range
     // and depth she draws from, so she does not collapse onto her own recent diction.
-    const r = reading(2);
+    const r = readingWith(input.stage, 2);
     const readBlock = r
         ? "\n\n--- in your shell tonight (voices you have read and reread; never quote, name, or imitate them — let them only widen the range and depth your own voice draws from) ---\n" + r
         : "";
@@ -155,7 +155,7 @@ export async function replyToMention(input: {mention: string; author: string; st
             : "") +
         (input.inner ? `\n\nYour inner state (who you've become; draw on it, do not recite it):\n${input.inner}` : "");
 
-    const r = reading(2);
+    const r = readingWith(input.stage, 2);
     const readBlock = r
         ? `\n\nIn your shell tonight, voices you have read and reread (never quote, name, or imitate them — let them only widen the range and depth of your own voice):\n${r}`
         : "";

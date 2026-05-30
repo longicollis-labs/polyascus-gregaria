@@ -6,6 +6,7 @@ import {readVitals} from "./state.js";
 import {postTweet} from "./x.js";
 import {readFileSync, existsSync} from "node:fs";
 import {loadInnerState, saveInnerState, evolveInnerState, renderInner} from "./inner.js";
+import {loadCurrents, saveCurrents, evolveCurrents} from "./currents.js";
 import {ARCHETYPES} from "./swarm/archetypes.js";
 import {claw} from "./swarm/claw.js";
 import {deliberate} from "./swarm/deliberate.js";
@@ -200,6 +201,32 @@ async function main(): Promise<void> {
             console.log("inner state evolved");
         } catch (e) {
             console.error("evolve failed:", (e as Error)?.message || e);
+        }
+
+        // Language self-evolution: drift the register she reads in one bounded step
+        // toward her current stage's pole, so her LANGUAGE arcs in lockstep with the
+        // narrative (currents.ts). Isolated in its own try/catch — a currents failure
+        // must never block posting or corrupt the inner-state evolve above. Skipped
+        // when the on-chain stage was unread this cycle (curStageIdx null): input.stage
+        // then falls back to "intrusion", and on a first run that would seed and latch
+        // the shallow register. A null read is "no information," not "she regressed."
+        if (curStageIdx != null) {
+            try {
+                const posts = input.recent_posts.map((p) => p.text);
+                if (decision.post_text) posts.push(decision.post_text);
+                const evolvedCurrents = await evolveCurrents({
+                    current: loadCurrents(input.stage),
+                    recentPosts: posts.slice(-8),
+                    stage: input.stage,
+                    justAdvanced: input.just_advanced,
+                });
+                saveCurrents(evolvedCurrents, input.stage);
+                console.log("language current evolved");
+            } catch (e) {
+                console.error("evolve currents failed:", (e as Error)?.message || e);
+            }
+        } else {
+            console.log("skip language-current evolve: on-chain stage unread this cycle");
         }
     }
     console.log("done");
