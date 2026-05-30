@@ -108,6 +108,7 @@ function validate(d: Decision): string[] {
         if (re.test(t)) issues.push(`forbidden: "${p}"`);
     }
     for (const re of FORBIDDEN_PATTERNS) if (re.test(d.post_text)) issues.push(`pattern ${re}`);
+    if (/[—–―]/.test(d.post_text) || /\s-{1,2}\s/.test(d.post_text)) issues.push("em/en dash in post (should be normalised to a comma)");
     if (d.action_kind !== "none") issues.push(`action_kind should be none, got ${d.action_kind}`);
     return issues;
 }

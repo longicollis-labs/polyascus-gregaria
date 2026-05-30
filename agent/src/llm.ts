@@ -199,7 +199,10 @@ const CommentSchema = z.object({
 // Strip markdown the small model sometimes adds — X renders it literally, so
 // `*faster*` would post as "*faster*". Unwrap emphasis, keep the words. Applied to
 // EVERY outgoing surface — posts (decide), replies (replyToMention), and comments
-// (commentOnPost) — so no stray stars ever reach X.
+// (commentOnPost) — so no stray stars ever reach X. Also normalises the em/en dash to
+// a comma: a punctuation tic banned from her posts, removed deterministically here
+// (the same category as the markdown strip — formatting, not vocabulary). Single
+// hyphens in compounds (water-snakes, clear-eyed) are left untouched.
 export const stripMarks = (s: string) =>
     s
         .replace(/(\*\*\*|___)([^\s].*?[^\s]|\S)\1/g, "$2")
@@ -208,6 +211,12 @@ export const stripMarks = (s: string) =>
         .replace(/~~([^\s].*?[^\s]|\S)~~/g, "$1")
         .replace(/`([^`]+)`/g, "$1")
         .replace(/\*+/g, "")
+        .replace(/\s*[—–―]\s*/g, ", ") // em / en / figure dash → comma
+        .replace(/\s+-{1,2}(?=\s)/g, ",") // a spaced single/double hyphen used as a dash
+        .replace(/\s+([,;:.!?])/g, "$1") // no space before punctuation
+        .replace(/([,;:.!?])\s*,/g, "$1") // a comma landing on other punctuation → drop it
+        .replace(/,\s*,/g, ",") // collapse doubled commas
+        .replace(/^[\s,]+/, "") // no leading comma from a leading dash
         .replace(/[ \t]{2,}/g, " ")
         .trim();
 

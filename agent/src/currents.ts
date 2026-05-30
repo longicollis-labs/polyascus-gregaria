@@ -95,8 +95,8 @@ export const STAGE_CURRENTS: Record<string, Currents> = {
     },
     castration: {
         register:
-            "elegy with a clenched jaw — the held breath of the dash over a loss with a name (the brood, the line that ends here); grief that hardens toward colder resolve, never slackens into surrender",
-        cadence: "compression to the bone; the dash as a held breath; one small loss made enormous",
+            "elegy with a clenched jaw — the caught breath of a sentence that stops itself over a loss with a name (the brood, the line that ends here); grief that hardens toward colder resolve, never slackens into surrender",
+        cadence: "compression to the bone; the held pause where the breath catches; one small loss made enormous",
         diction: ["elegiac compression", "tenderness kept flinty", "grief load-bearing by the heat under it"],
         imagery: ["the brood that will never be", "a skull turned over in the hands", "a small creature seen enormous and slant"],
         touchstones: [
