@@ -16,6 +16,7 @@
     "test-currents": "tsx scripts/test-currents.ts",
     "swarm-dry": "tsx scripts/swarm-dry.ts",
     "ab-swarm": "tsx scripts/ab-swarm.ts",
+    "scribe-memo": "tsx scripts/scribe-memo.ts",
     "typecheck": "tsc --noEmit"
   },
   "engines": {
