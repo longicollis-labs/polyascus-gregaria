@@ -18,6 +18,7 @@
     "ab-swarm": "tsx scripts/ab-swarm.ts",
     "scribe-memo": "tsx scripts/scribe-memo.ts",
     "ab-score": "tsx scripts/ab-score.ts",
+    "swarm-diag": "tsx scripts/swarm-diag.ts",
     "typecheck": "tsc --noEmit"
   },
   "engines": {
