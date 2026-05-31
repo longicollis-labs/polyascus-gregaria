@@ -375,6 +375,24 @@ async function runSwarm(input: AgentInput, inner: string): Promise<RunResult["sw
     };
 }
 
+// The small Haiku model occasionally emits malformed JSON (e.g. XML tags bleeding
+// into a string field), which generateObject surfaces as AI_NoObjectGeneratedError
+// AFTER its own internal retries. Un-caught, a single bad call aborts the whole
+// ~$15 run and writes no sheet. Retry each call a few times (a fresh generation
+// almost always parses), so one transient miss never wastes the gate run.
+async function withRetry<T>(label: string, fn: () => Promise<T>, attempts = 3): Promise<T> {
+    let lastErr: unknown;
+    for (let a = 1; a <= attempts; a++) {
+        try {
+            return await fn();
+        } catch (e) {
+            lastErr = e;
+            console.log(`    ${label} attempt ${a}/${attempts} failed: ${((e as Error)?.message ?? String(e)).split("\n")[0]}`);
+        }
+    }
+    throw lastErr;
+}
+
 function mdEscape(s: string): string {
     return s.replace(/\\/g, "\\\\").replace(/\|/g, "\\|");
 }
@@ -480,10 +498,20 @@ async function main(): Promise<void> {
         // Run single first, then swarm — serial to keep cost predictable +
         // the wall-clock honest. (The swarm itself fans out N claws in
         // parallel; single is one call.)
-        const single = await runSingle(f.input, f.inner);
-        console.log(`    single: ${single.ms}ms · ${single.post.length}c`);
-        const swarm = await runSwarm(f.input, f.inner);
-        console.log(`    swarm:  ${swarm.ms}ms · ${swarm.post.length}c · elected=${swarm.elected_archetype_id} · tripped=[${swarm.tripped.join(",")}]`);
+        let single: RunResult["single"];
+        let swarm: RunResult["swarm"];
+        try {
+            single = await withRetry("single", () => runSingle(f.input, f.inner));
+            console.log(`    single: ${single.ms}ms · ${single.post.length}c`);
+            swarm = await withRetry("swarm", () => runSwarm(f.input, f.inner));
+            console.log(`    swarm:  ${swarm.ms}ms · ${swarm.post.length}c · elected=${swarm.elected_archetype_id} · tripped=[${swarm.tripped.join(",")}]`);
+        } catch (e) {
+            // Persistent failure on one side — skip the fixture (A/B needs both)
+            // rather than abort the run. blinds/results stay index-aligned (both
+            // are pushed together, or neither), so the key file stays correct.
+            console.log(`    !! ${f.name} skipped after retries: ${((e as Error)?.message ?? String(e)).split("\n")[0]}`);
+            continue;
+        }
 
         results.push({fixture_index: i, fixture_name: f.name, single, swarm});
         blinds.push(blindingFor(i));
