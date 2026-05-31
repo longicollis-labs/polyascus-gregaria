@@ -8,9 +8,9 @@
 //
 // Scoring components, each in [0,1]:
 //   • freshness  — 1.0 if this draft's opening 2 words don't echo any of her
-//                  last 8 recent posts, 0.0 if they do. Same openerKey() the
-//                  live decide() uses, so the swarm and the single-LLM path
-//                  agree on what counts as a repeat.
+//                  last 20 recent posts, 0.0 if they do. Same openerKey() AND
+//                  same window the live decide() uses, so the swarm and the
+//                  single-LLM path agree on what counts as a repeat.
 //   • affinity   — per (archetype, stage) lookup in [0,1]. Defaults to 0.5
 //                  (neutral): a stage where the archetype fits especially
 //                  well scores 1.0 (a bonus, not a requirement); a stage
@@ -73,9 +73,11 @@ export type DeliberateContext = {
 export function deliberate(drafts: readonly ClawDraft[], ctx: DeliberateContext): Deliberation {
     if (drafts.length === 0) throw new Error("deliberate: drafts must be non-empty");
 
-    // Her own recent openings, mirror of decide()'s recentOpenerKeys.
+    // Her own recent openings, mirror of decide()'s recentOpenerKeys. Window
+    // tracks the live decide() opener window (llm.ts slice(-20) /
+    // index.ts recentPosts(log, 20)); keep in sync — it has moved 8->15->20.
     const recentOpenerKeys = new Set(
-        ctx.recent_posts.slice(-8).map((p) => openerKey(p.text)).filter(Boolean),
+        ctx.recent_posts.slice(-20).map((p) => openerKey(p.text)).filter(Boolean),
     );
 
     // Score every draft. Iterate input order so callers can map back; the
