@@ -45,9 +45,9 @@ export async function decide(input: AgentInput, inner = ""): Promise<Decision> {
     let object: Decision | undefined;
     let tripped: "tic" | "morning" | "epiphany" | "opener" | null = null;
     // Her own recent openings, normalised — to catch a beat that begins like one.
-    // Last 15: a tighter window let slow echoes slip (the same first words returning
-    // a half-dozen posts apart, below the old cap), so it spans her recent run.
-    const recentOpenerKeys = [...new Set(input.recent_posts.slice(-15).map((p) => openerKey(p.text)).filter(Boolean))];
+    // Last 20: a tighter window let slow echoes slip (the same first words returning
+    // sixteen-to-twenty posts apart, just below the old cap), so it spans her recent run.
+    const recentOpenerKeys = [...new Set(input.recent_posts.slice(-20).map((p) => openerKey(p.text)).filter(Boolean))];
     // A rotating handful of the voices in her library — woven in to widen the range
     // and depth she draws from, so she does not collapse onto her own recent diction.
     const r = readingWith(input.stage, 2);
