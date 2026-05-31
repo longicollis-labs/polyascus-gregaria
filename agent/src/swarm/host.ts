@@ -28,6 +28,7 @@ import {generateObject} from "ai";
 import {createAnthropic} from "@ai-sdk/anthropic";
 import {readFileSync} from "node:fs";
 import {MODEL} from "../constants.js";
+import {readingWith} from "../currents.js";
 import {
     DecisionSchema,
     EPIPHANY_TIC,
@@ -78,6 +79,17 @@ export async function host(args: {
     // Same recent run for the body-echo guard (echoedRun) — mirror decide().
     const recentTexts = input.recent_posts.slice(-20).map((p) => p.text);
 
+    // The same per-stage register + curated voice range decide() weaves in
+    // (readingWith → currents pole + soul library). Without it the host polishes
+    // off the canonical system prompt alone, while the elected facet draft pulls
+    // it toward a single archetype's flavour — the in-voice gap the A/B test
+    // surfaced. Grounding the host in her current register (NOT the claws, which
+    // must stay diverse facets) is what makes the final beat read as HER, not a facet.
+    const r = readingWith(input.stage, 2);
+    const readBlock = r
+        ? "\n\n--- in your shell tonight (voices you have read and reread; never quote, name, or imitate them — let them only widen the range and depth your own voice draws from) ---\n" + r
+        : "";
+
     // Up to 2 dissent drafts shown — enough to give the host a sense of which
     // other facets were close, without burning prompt space or tempting a blend.
     const dissentLines = dissent
@@ -120,6 +132,7 @@ export async function host(args: {
             prompt:
                 JSON.stringify(input, null, 2) +
                 (inner ? "\n\n--- your inner state (who you've become; live from it, do not recite it) ---\n" + inner : "") +
+                readBlock +
                 swarmBlock +
                 nudge,
             maxRetries: 2,
