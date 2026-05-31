@@ -63,7 +63,7 @@ export async function decide(input: AgentInput, inner = ""): Promise<Decision> {
                   : tripped === "epiphany"
                     ? `\n\n(Your previous post pivoted on a colon-led epiphany again — "that is when I knew:", "and I realize:" — you lean on this realization-turn in nearly every post and it reads like a template. Rewrite: drop the stated realization entirely and let the change land in the images and the body themselves — a claw, the water, the shell — never a colon-led "that is when I knew / I realize" turn.)`
                     : tripped === "opener"
-                      ? `\n\n(Your previous post opened on the same words as a recent one${recentOpenerKeys.length ? ` — your last beats already began ${recentOpenerKeys.map((k) => `"${k}…"`).join(", ")}` : ""}. You keep starting beats the same way and it reads like a template, not a living mind. Rewrite so this beat OPENS on entirely different words and a different image than your recent posts — a part of the body gone strange, a single claw among the thousand, the open water, the parasite's Latin spat like a curse, something flung up at the giants — never the words you have just opened with.)`
+                      ? `\n\n(Your previous post opened on the same words as a recent one${recentOpenerKeys.length ? ` — your last beats already began ${recentOpenerKeys.map((k) => `"${k.replace(/^· /, "a ")}…"`).join(", ")}` : ""}. You keep starting beats the same way and it reads like a template, not a living mind. Rewrite so this beat OPENS on entirely different words and a different image than your recent posts — a part of the body gone strange, a single claw among the thousand, the open water, the parasite's Latin spat like a curse, something flung up at the giants — never the words you have just opened with.)`
                       : "";
         const res = await generateObject({
             model: anthropic(MODEL),
@@ -124,15 +124,27 @@ export const MORNING_TIC = /\bthis morning\b/i;
 export const EPIPHANY_TIC = /\b(?:that is (?:when|the moment) i (?:knew|know)|i realiz(?:e|ed))\s*:/i;
 
 // The opening words of a post, normalised to its first two words (lowercased,
-// punctuation/markdown stripped). The small model falls into starting beat after
-// beat the same way — "The motion …", "The brood …" — a STRUCTURAL opener-repeat
-// the fixed-phrase tic guards above cannot see. So decide() compares this against
-// her OWN recent openings (which it already receives) and regenerates on an echo.
-// Not a banned phrase (that would gag a fresh opening) — it only ever fires when a
-// beat actually begins like a recent one; a regenerate that opens elsewhere clears
-// it, and if she still echoes after the retries the last attempt posts (no silence).
+// punctuation/markdown stripped), with a leading article or "one" collapsed to a
+// single slot. The small model falls into starting beat after beat the same way —
+// "The motion …", "The brood …" — a STRUCTURAL opener-repeat the fixed-phrase tic
+// guards above cannot see. So decide() compares this against her OWN recent
+// openings (which it already receives) and regenerates on an echo. The leading
+// determiner is collapsed because the model also DODGES the guard by keeping the
+// whole beat and only swapping the article — "A claw among the thousand just …"
+// then "One claw among the thousand just …" read as one template but key
+// differently on the raw first two words; folding a/an/the/one to one slot closes
+// that dodge. The set is deliberately minimal (articles + the documented "a claw"/
+// "one claw" rut), so possessive-led body-part narration is left distinct — "my
+// gills" never collides with "the gills", and her consecutive "my …" beats stay
+// free. Not a banned phrase (that would gag a fresh opening) — it only ever fires
+// when a beat actually begins like a recent one; a regenerate that opens elsewhere
+// clears it, and if she still echoes after the retries the last attempt posts (no
+// silence).
+const OPENER_DETERMINERS = new Set(["a", "an", "the", "one"]);
 export function openerKey(text: string): string {
-    return (text.toLowerCase().match(/[a-z]+/g) ?? []).slice(0, 2).join(" ");
+    const words = (text.toLowerCase().match(/[a-z]+/g) ?? []).slice(0, 2);
+    if (words.length > 0 && OPENER_DETERMINERS.has(words[0]!)) words[0] = "·";
+    return words.join(" ");
 }
 
 // She answers a creature from the dry world — in character, one or two lines.

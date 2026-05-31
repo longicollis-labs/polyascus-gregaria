@@ -104,7 +104,7 @@ export async function host(args: {
                   : last === "epiphany"
                     ? `\n\n(Your previous polish pivoted on a colon-led epiphany — "that is when I knew:", "and I realize:" — drop the stated realization entirely and let the change land in the images and the body themselves, never a colon-led realization turn.)`
                     : last === "opener"
-                      ? `\n\n(Your previous polish opened on the same words as a recent one${recentOpenerKeys.length ? ` — your last beats already began ${recentOpenerKeys.map((k) => `"${k}…"`).join(", ")}` : ""}. Rewrite so this beat OPENS on entirely different words — a part of the body gone strange, a single claw among the thousand, the open water, the parasite's Latin spat like a curse, something flung up at the giants.)`
+                      ? `\n\n(Your previous polish opened on the same words as a recent one${recentOpenerKeys.length ? ` — your last beats already began ${recentOpenerKeys.map((k) => `"${k.replace(/^· /, "a ")}…"`).join(", ")}` : ""}. Rewrite so this beat OPENS on entirely different words — a part of the body gone strange, a single claw among the thousand, the open water, the parasite's Latin spat like a curse, something flung up at the giants.)`
                       : "";
         const t0 = Date.now();
         const res = await generateObject({
