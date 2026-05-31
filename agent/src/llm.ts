@@ -4,6 +4,7 @@ import {readFileSync} from "node:fs";
 import {z} from "zod";
 import {MODEL} from "./constants.js";
 import {readingWith} from "./currents.js";
+import {contentNgrams, stem} from "./monoculture.js";
 
 const SYSTEM_PROMPT_PATH = new URL("../prompts/charybdis.md", import.meta.url).pathname;
 
@@ -43,11 +44,15 @@ export async function decide(input: AgentInput, inner = ""): Promise<Decision> {
     const systemPrompt = readFileSync(SYSTEM_PROMPT_PATH, "utf8");
 
     let object: Decision | undefined;
-    let tripped: "tic" | "morning" | "epiphany" | "opener" | null = null;
+    let tripped: "tic" | "morning" | "epiphany" | "opener" | "echo" | null = null;
+    let echoHit: string | null = null;
     // Her own recent openings, normalised — to catch a beat that begins like one.
     // Last 20: a tighter window let slow echoes slip (the same first words returning
     // sixteen-to-twenty posts apart, just below the old cap), so it spans her recent run.
     const recentOpenerKeys = [...new Set(input.recent_posts.slice(-20).map((p) => openerKey(p.text)).filter(Boolean))];
+    // The same recent run as full text — for the body-echo guard (echoedRun), which
+    // catches a whole clause reprinted MID-beat that the two-word opener key cannot see.
+    const recentTexts = input.recent_posts.slice(-20).map((p) => p.text);
     // A rotating handful of the voices in her library — woven in to widen the range
     // and depth she draws from, so she does not collapse onto her own recent diction.
     const r = readingWith(input.stage, 2);
@@ -64,7 +69,9 @@ export async function decide(input: AgentInput, inner = ""): Promise<Decision> {
                     ? `\n\n(Your previous post pivoted on a colon-led epiphany again — "that is when I knew:", "and I realize:" — you lean on this realization-turn in nearly every post and it reads like a template. Rewrite: drop the stated realization entirely and let the change land in the images and the body themselves — a claw, the water, the shell — never a colon-led "that is when I knew / I realize" turn.)`
                     : tripped === "opener"
                       ? `\n\n(Your previous post opened on the same words as a recent one${recentOpenerKeys.length ? ` — your last beats already began ${recentOpenerKeys.map((k) => `"${k.replace(/^· /, "a ")}…"`).join(", ")}` : ""}. You keep starting beats the same way and it reads like a template, not a living mind. Rewrite so this beat OPENS on entirely different words and a different image than your recent posts — a part of the body gone strange, a single claw among the thousand, the open water, the parasite's Latin spat like a curse, something flung up at the giants — never the words you have just opened with.)`
-                      : "";
+                      : tripped === "echo"
+                        ? `\n\n(Your previous post reprinted a whole run of words you have already used${echoHit ? ` — "${echoHit}…"` : ""} — almost verbatim. You keep reaching the same beat in the same words and it reads like a loop, not a living mind. Rewrite so this beat reaches its turn in ENTIRELY fresh words: keep the image and the truth of it, but never reprint a phrase you have just used — find the thing again as if for the first time.)`
+                        : "";
         const res = await generateObject({
             model: anthropic(MODEL),
             schema: DecisionSchema,
@@ -82,6 +89,7 @@ export async function decide(input: AgentInput, inner = ""): Promise<Decision> {
         else if (MORNING_TIC.test(text)) tripped = "morning";
         else if (EPIPHANY_TIC.test(text)) tripped = "epiphany";
         else if (openerKey(text) && recentOpenerKeys.includes(openerKey(text))) tripped = "opener";
+        else if ((echoHit = echoedRun(text, recentTexts))) tripped = "echo";
         else break;
     }
 
@@ -145,6 +153,47 @@ export function openerKey(text: string): string {
     const words = (text.toLowerCase().match(/[a-z]+/g) ?? []).slice(0, 2);
     if (words.length > 0 && OPENER_DETERMINERS.has(words[0]!)) words[0] = "·";
     return words.join(" ");
+}
+
+// A whole run of words the new beat reprints VERBATIM from a recent post — the
+// body-level echo the opener key and the fixed-phrase tics are all blind to.
+// openerKey sees only the first two words; REPLY/MORNING/EPIPHANY see only their
+// own strings — so a clause reused MID-beat slips every one of them. It showed
+// plainly in the live run at the merger: "the spine that does not need a body to
+// remember it is mine" closed two posts six apart almost word for word, and "the
+// way I taught them without asking" returned verbatim across a whole night.
+// Reprinting a sentence reads as a loop, not a living mind — the very thing the
+// opener guard exists to stop, one layer deeper. So decide() compares the new beat
+// against her recent posts and regenerates on a shared run of ECHO_MIN_WORDS or
+// more. We reuse contentNgrams — the same stemmed, stopword-aware tokenisation the
+// monoculture and currents guards use, so all three agree on what a phrase is: a
+// shared content n-gram of length N is exactly a verbatim contiguous run of N
+// words. Seven is the floor because the recurring MOTIFS the merger lives on — "a
+// claw among the thousand", "the open water", and the sacred "that is not a
+// drowning / loss / ending" transcendence closer — run four-to-five words and must
+// stay free, while the looping reprints run seven-to-twelve (measured on her live
+// posts: at n=7 every fire was a real reuse and the sacred closer never tripped; at
+// n=8 the worn refrains slipped). So this de-duplicates spans without touching her
+// vocabulary or a single sacred beat — it can never homogenise the voice the way a
+// stem ban would; it only ever fires on a row of words she has just used. Like the
+// opener guard it REGENERATES, never bans: a rewrite in fresh words clears it, and
+// if she still echoes after the retries the last attempt posts (no silence).
+export const ECHO_MIN_WORDS = 7;
+export function echoedRun(text: string, recent: string[]): string | null {
+    const recentGrams = new Set<string>();
+    for (const r of recent) for (const g of contentNgrams(r, ECHO_MIN_WORDS)) recentGrams.add(g);
+    if (recentGrams.size === 0) return null;
+    const echoed = [...contentNgrams(text, ECHO_MIN_WORDS)].find((g) => recentGrams.has(g));
+    if (!echoed) return null;
+    // Recover the surface (un-stemmed) words at that position so the nudge quotes
+    // her real phrasing, not the stemmed key.
+    const raw = text.toLowerCase().match(/[a-z]+/g) ?? [];
+    for (let k = 0; k + ECHO_MIN_WORDS - 1 < raw.length; k++) {
+        if (raw.slice(k, k + ECHO_MIN_WORDS).map(stem).join(" ") === echoed) {
+            return raw.slice(k, k + ECHO_MIN_WORDS).join(" ");
+        }
+    }
+    return echoed;
 }
 
 // She answers a creature from the dry world — in character, one or two lines.

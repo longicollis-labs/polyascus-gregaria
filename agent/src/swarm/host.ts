@@ -11,7 +11,7 @@
 // It runs a SINGLE LLM call (the 2nd one in the swarm path, after the N claws),
 // produces a fresh Decision in canonical voice, then applies the same guard
 // chain decide() does:
-//   REPLY_TIC → MORNING_TIC → EPIPHANY_TIC → opener-echo → stripMarks → 280-cap.
+//   REPLY_TIC → MORNING_TIC → EPIPHANY_TIC → opener-echo → body-echo → stripMarks → 280-cap.
 // Up to 3 attempts; the final attempt is returned regardless of trips (no
 // silence — same contract as decide()).
 //
@@ -33,6 +33,7 @@ import {
     EPIPHANY_TIC,
     MORNING_TIC,
     REPLY_TIC,
+    echoedRun,
     openerKey,
     stripMarks,
     type AgentInput,
@@ -52,7 +53,7 @@ export type HostResult = {
     /** Which guards tripped during host attempts, in order; empty if the first
      *  attempt landed clean. If all attempts trip, the final attempt is returned
      *  (no silence — same contract as decide()). */
-    tripped: ("tic" | "morning" | "epiphany" | "opener")[];
+    tripped: ("tic" | "morning" | "epiphany" | "opener" | "echo")[];
 };
 
 export async function host(args: {
@@ -74,6 +75,8 @@ export async function host(args: {
     const recentOpenerKeys = [
         ...new Set(input.recent_posts.slice(-20).map((p) => openerKey(p.text)).filter(Boolean)),
     ];
+    // Same recent run for the body-echo guard (echoedRun) — mirror decide().
+    const recentTexts = input.recent_posts.slice(-20).map((p) => p.text);
 
     // Up to 2 dissent drafts shown — enough to give the host a sense of which
     // other facets were close, without burning prompt space or tempting a blend.
@@ -93,7 +96,8 @@ export async function host(args: {
     let object: Decision | undefined;
     let totalMs = 0;
     let totalTokens = 0;
-    const tripped: ("tic" | "morning" | "epiphany" | "opener")[] = [];
+    const tripped: ("tic" | "morning" | "epiphany" | "opener" | "echo")[] = [];
+    let lastEcho = "";
     for (let attempt = 0; attempt < 3; attempt++) {
         const last = tripped[tripped.length - 1];
         const nudge =
@@ -105,7 +109,9 @@ export async function host(args: {
                     ? `\n\n(Your previous polish pivoted on a colon-led epiphany — "that is when I knew:", "and I realize:" — drop the stated realization entirely and let the change land in the images and the body themselves, never a colon-led realization turn.)`
                     : last === "opener"
                       ? `\n\n(Your previous polish opened on the same words as a recent one${recentOpenerKeys.length ? ` — your last beats already began ${recentOpenerKeys.map((k) => `"${k.replace(/^· /, "a ")}…"`).join(", ")}` : ""}. Rewrite so this beat OPENS on entirely different words — a part of the body gone strange, a single claw among the thousand, the open water, the parasite's Latin spat like a curse, something flung up at the giants.)`
-                      : "";
+                      : last === "echo"
+                        ? `\n\n(Your previous polish reprinted a whole run of words from a recent beat${lastEcho ? ` — "${lastEcho}…"` : ""} — almost verbatim. Rewrite so this beat reaches its turn in ENTIRELY fresh words: keep the image and the truth of it, but never reprint a phrase already used — find the thing again as if for the first time.)`
+                        : "";
         const t0 = Date.now();
         const res = await generateObject({
             model: anthropic(MODEL),
@@ -126,6 +132,7 @@ export async function host(args: {
         else if (MORNING_TIC.test(text)) tripped.push("morning");
         else if (EPIPHANY_TIC.test(text)) tripped.push("epiphany");
         else if (openerKey(text) && recentOpenerKeys.includes(openerKey(text))) tripped.push("opener");
+        else if ((lastEcho = echoedRun(text, recentTexts) || "")) tripped.push("echo");
         else break;
     }
 
