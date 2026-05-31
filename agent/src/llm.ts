@@ -283,6 +283,21 @@ export const stripMarks = (s: string) =>
         .replace(/[ \t]{2,}/g, " ")
         .trim();
 
+// Final post form: stripMarks, then cap to 280 at her last complete sentence
+// (else trail off with …). Mirrors decide()'s inline cap; shared by the swarm
+// host + keepBetter so every post-ready surface caps identically.
+export function finalizePost(text: string): string {
+    let post = stripMarks((text || "").trim());
+    if (post.length > 280) {
+        const capped = post.slice(0, 280);
+        const ends = [...capped.matchAll(/[.!?](?=\s|$)/g)];
+        post = ends.length
+            ? capped.slice(0, ends[ends.length - 1]!.index! + 1).trim()
+            : capped.slice(0, capped.lastIndexOf(" ")).trim() + "…";
+    }
+    return post;
+}
+
 // She comes across a post drifting over the water (NOT addressed to her) and may
 // pass remark — or stay silent (worth=false), the default for most. Two buckets:
 // `kin` (her own kind — crabs/lobsters/marine life/parasites) and `dry-world`

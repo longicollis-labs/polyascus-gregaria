@@ -27,7 +27,6 @@
 import {generateObject} from "ai";
 import {createAnthropic} from "@ai-sdk/anthropic";
 import {readFileSync} from "node:fs";
-import {MODEL} from "../constants.js";
 import {readingWith} from "../currents.js";
 import {
     DecisionSchema,
@@ -35,14 +34,17 @@ import {
     MORNING_TIC,
     REPLY_TIC,
     echoedRun,
+    finalizePost,
     openerKey,
-    stripMarks,
     type AgentInput,
     type Decision,
 } from "../llm.js";
 import type {ClawDraft} from "./claw.js";
 
 const SYSTEM_PROMPT_PATH = new URL("../../prompts/charybdis.md", import.meta.url).pathname;
+// The aggregator role is harder than the proposer role — run the host (synthesis +
+// polish) on a stronger model than the Haiku generators. Env-overridable.
+const HOST_MODEL = process.env.SWARM_HOST_MODEL || "claude-sonnet-4-6";
 
 export type HostResult = {
     /** The final Decision — post_text already stripped of markdown and capped at 280. */
@@ -98,12 +100,12 @@ export async function host(args: {
         .join("\n");
 
     const swarmBlock =
-        `\n\n--- your facets just deliberated this beat ---\n` +
-        `The facet you elected (${elected.archetype_id}): ${JSON.stringify(elected.decision.post_text ?? "")}\n` +
+        `\n\n--- your facets just drafted this beat; a judge ranked them strongest-first ---\n` +
+        `The strongest draft (${elected.archetype_id}): ${JSON.stringify(elected.decision.post_text ?? "")}\n` +
         (dissentLines
-            ? `Facets that came close (do not blend; borrow only the rare phrase that sharpens):\n${dissentLines}\n`
+            ? `The next strongest (borrow at most ONE line that sharpens — never blend, average, or smooth them together):\n${dissentLines}\n`
             : "") +
-        `\nEmit the FINAL beat in your canonical voice — preserve the elected facet's image and beat-shape; lift any language that strays from your register. observations + deliberation are private notes for your log.`;
+        `\nEmit the FINAL beat in your canonical voice. KEEP the strongest draft's sharpest line or image almost VERBATIM — do not soften it, generalise it, or trade its specific punch for something safer; a blander, more "polished" beat is a FAILURE. Fix only what strays from your register, the length, and the mechanics. observations + deliberation are private notes for your log.`;
 
     let object: Decision | undefined;
     let totalMs = 0;
@@ -126,7 +128,7 @@ export async function host(args: {
                         : "";
         const t0 = Date.now();
         const res = await generateObject({
-            model: anthropic(MODEL),
+            model: anthropic(HOST_MODEL),
             schema: DecisionSchema,
             system: systemPrompt,
             prompt:
@@ -149,17 +151,7 @@ export async function host(args: {
         else break;
     }
 
-    // stripMarks + 280-cap — mirror decide() exactly. A long generation is
-    // trimmed to her last complete sentence; if no sentence break in cap, trail
-    // off (…) rather than chop mid-word.
-    let post = stripMarks((object!.post_text || "").trim());
-    if (post.length > 280) {
-        const capped = post.slice(0, 280);
-        const ends = [...capped.matchAll(/[.!?](?=\s|$)/g)];
-        post = ends.length
-            ? capped.slice(0, ends[ends.length - 1]!.index! + 1).trim()
-            : capped.slice(0, capped.lastIndexOf(" ")).trim() + "…";
-    }
-    object!.post_text = post;
+    // stripMarks + 280-cap (shared finalizePost — same as decide()).
+    object!.post_text = finalizePost(object!.post_text || "");
     return {decision: object!, ms: totalMs, tokens: totalTokens, tripped};
 }

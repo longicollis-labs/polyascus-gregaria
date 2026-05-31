@@ -9,7 +9,7 @@ import {loadInnerState, saveInnerState, evolveInnerState, renderInner} from "./i
 import {loadCurrents, saveCurrents, evolveCurrents} from "./currents.js";
 import {ARCHETYPES} from "./swarm/archetypes.js";
 import {claw} from "./swarm/claw.js";
-import {deliberate} from "./swarm/deliberate.js";
+import {judgeElect, keepBetter} from "./swarm/judge.js";
 import {host} from "./swarm/host.js";
 
 // Most recent market cap recorded in the log, for the brood-motion signal.
@@ -117,9 +117,13 @@ async function main(): Promise<void> {
         const n = Math.max(1, Math.min(parseInt(process.env.SWARM_N ?? "3", 10) || 3, ARCHETYPES.length));
         const archetypes = ARCHETYPES.slice(0, n);
         const drafts = await Promise.all(archetypes.map((a) => claw(a, input, innerRendered)));
-        const {elected, dissent, scores} = deliberate(drafts, {recent_posts: input.recent_posts, stage: input.stage});
-        const hostResult = await host({input, inner: innerRendered, elected, dissent});
-        decision = hostResult.decision;
+        // #1 quality selection: heuristic pre-filter → stronger-model judge panel.
+        // #3 top-K runners-up handed to the host to synthesise across.
+        const {elected, runnersUp, scores} = await judgeElect(drafts, {recent_posts: input.recent_posts, stage: input.stage});
+        const hostResult = await host({input, inner: innerRendered, elected, dissent: runnersUp});
+        // #4 anti-blandify: ship the host polish only if it beats the elected raw draft.
+        const {text, kept} = await keepBetter(hostResult.decision.post_text ?? "", elected.decision.post_text ?? "", input.stage);
+        decision = {...hostResult.decision, post_text: text};
         swarmMeta = {
             n,
             elected_archetype_id: elected.archetype_id,
@@ -130,14 +134,18 @@ async function main(): Promise<void> {
                 tokens: d.tokens,
             })),
             scores,
-            host: {ms: hostResult.ms, tokens: hostResult.tokens, tripped: [...hostResult.tripped]},
+            host: {
+                ms: hostResult.ms,
+                tokens: hostResult.tokens,
+                tripped: kept === "raw" ? [...hostResult.tripped, "kept-raw"] : [...hostResult.tripped],
+            },
             // T-012: captured here so the scriptorium permalink can recompute
             // the receipt hash client-side. Omitted when the chain read failed
             // (inf is null) — the same condition that nulls stage_index.
             fed_at_post: inf?.fed_sol,
         };
         console.log(
-            `swarm: N=${n} elected=${elected.archetype_id} host_tripped=[${hostResult.tripped.join(",")}] ` +
+            `swarm: N=${n} elected=${elected.archetype_id} kept=${kept} host_tripped=[${hostResult.tripped.join(",")}] ` +
                 `ms=${hostResult.ms} tokens=${hostResult.tokens}`,
         );
     } else {

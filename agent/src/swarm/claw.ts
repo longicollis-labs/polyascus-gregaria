@@ -8,9 +8,12 @@
 // therefore represent the unguarded VOICE of one archetype, not a
 // post-ready post.
 //
-// Same input + same archetype produces a stable draft because temperature
-// is pinned to 0 (greedy decoding) and the archetype fragment is the
-// per-claw discriminant.
+// The archetype fragment is the per-claw discriminant. Temperature is no longer
+// pinned to 0: best-of-N is bounded by its best draft, and greedy decoding made
+// the 12 drafts near-duplicates (a thin pool to choose from). A moderate
+// temperature (~0.9, env CLAW_TEMP) widens the pool so the judge has genuinely
+// different lottery tickets to pick the best of — diversity provably lowers the
+// best-of-N error floor. Drafts are no longer reproducible run-to-run by design.
 //
 // Operator-protected: this is voice-level code. It is NEVER invoked by the
 // live posting path; T-005 wires it behind SWARM_ENABLED=1 (default OFF).
@@ -23,6 +26,11 @@ import {DecisionSchema, type AgentInput, type Decision} from "../llm.js";
 import type {Archetype} from "./archetypes.js";
 
 const SYSTEM_PROMPT_PATH = new URL("../../prompts/charybdis.md", import.meta.url).pathname;
+// Moderate temperature for best-of-N diversity (the judge selects quality after).
+const CLAW_TEMP = (() => {
+    const t = parseFloat(process.env.CLAW_TEMP ?? "0.9");
+    return Number.isFinite(t) && t >= 0 && t <= 2 ? t : 0.9;
+})();
 
 export type ClawDraft = {
     archetype_id: string;
@@ -46,7 +54,7 @@ export async function claw(archetype: Archetype, input: AgentInput, inner = ""):
         prompt:
             JSON.stringify(input, null, 2) +
             (inner ? "\n\n--- your inner state (who you've become; live from it, do not recite it) ---\n" + inner : ""),
-        temperature: 0,
+        temperature: CLAW_TEMP,
         maxRetries: 2,
     });
     return {

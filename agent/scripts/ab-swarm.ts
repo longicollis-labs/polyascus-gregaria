@@ -25,7 +25,7 @@ import {join} from "node:path";
 import {decide, type AgentInput, type Decision} from "../src/llm.js";
 import {ARCHETYPES} from "../src/swarm/archetypes.js";
 import {claw, type ClawDraft} from "../src/swarm/claw.js";
-import {deliberate} from "../src/swarm/deliberate.js";
+import {judgeElect, keepBetter} from "../src/swarm/judge.js";
 import {host} from "../src/swarm/host.js";
 
 const N = Math.max(1, Math.min(parseInt(process.env.SWARM_N ?? "12", 10) || 12, ARCHETYPES.length));
@@ -362,15 +362,18 @@ async function runSwarm(input: AgentInput, inner: string): Promise<RunResult["sw
     const t0 = Date.now();
     const archetypes = ARCHETYPES.slice(0, N);
     const claws = await Promise.all(archetypes.map((a) => claw(a, input, inner)));
-    const {elected, dissent} = deliberate(claws, {recent_posts: input.recent_posts, stage: input.stage});
-    const h = await host({input, inner, elected, dissent});
+    // #1 judge-select (heuristic pre-filter → stronger-model panel), #3 top-K to host
+    const {elected, runnersUp} = await judgeElect(claws, {recent_posts: input.recent_posts, stage: input.stage});
+    const h = await host({input, inner, elected, dissent: runnersUp});
+    // #4 anti-blandify: ship the host polish only if it beats the elected raw draft
+    const {text, kept} = await keepBetter(h.decision.post_text ?? "", elected.decision.post_text ?? "", input.stage);
     const totalTokens = claws.reduce((acc, c) => acc + c.tokens, 0) + h.tokens;
     return {
-        post: h.decision.post_text ?? "",
+        post: text,
         ms: Date.now() - t0,
         tokens: totalTokens,
         elected_archetype_id: elected.archetype_id,
-        tripped: h.tripped,
+        tripped: kept === "raw" ? [...h.tripped, "kept-raw"] : h.tripped,
         claws,
     };
 }
