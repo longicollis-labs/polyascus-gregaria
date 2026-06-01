@@ -1414,3 +1414,22 @@ ol.footnotes li:target {
     color: var(--rule);
     margin: 0 4px;
 }
+
+
+/* the breach bleeding into the record itself — a quiet field-note linking the
+   live council terminal. White paper, taupe ink, an occasional flicker. */
+.breach-bleed { max-width: 1240px; margin: 0 auto; padding: 10px 32px 0; text-align: center; }
+.breach-bleed a {
+    font-family: var(--serif); font-style: italic; font-size: 14px;
+    color: var(--taupe-ink); text-decoration: none;
+    border-bottom: 1px solid var(--rule);
+    animation: breach-flicker 7s steps(1) infinite;
+}
+.breach-bleed a:hover { color: var(--accent-strong); border-bottom-color: var(--taupe); }
+@keyframes breach-flicker {
+    0%, 96%, 100% { opacity: 0.78; }
+    96.5% { opacity: 0.28; }
+    97% { opacity: 0.95; }
+    97.6% { opacity: 0.45; }
+    98.2% { opacity: 0.88; }
+}
