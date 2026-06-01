@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-stage="6">
     <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -15,115 +15,111 @@
         <meta property="og:image" content="https://polyascus.com/specimen.png" />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:site" content="@CrabCharybdis" />
-        <meta name="theme-color" content="#0b0b0d" />
+        <meta name="theme-color" content="#ffffff" />
         <link rel="icon" type="image/x-icon" href="favicon.ico" />
-        <!-- No external/CDN fonts: relies on the system serif/mono fallback stack
-             in :root, matching breach.html. No network calls except, none here. -->
+        <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png" />
+        <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png" />
+        <link rel="icon" type="image/png" sizes="96x96" href="favicon-96x96.png" />
+        <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
+        <!-- The canonical site identity: the same Google Fonts link and the same
+             stylesheet the whole site loads (index.html, scriptorium-post.html).
+             The page is reskinned to the white record — no dark inversion. The
+             "breach" register comes from the copy and the consumed-stage taupe
+             depth (data-stage="6" drives style.css's --depth to 100%), not a
+             dark theme. The only network calls are the site font CDN and the
+             same-origin assets above. -->
+        <link
+            rel="stylesheet"
+            href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500;1,600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+        />
+        <link rel="stylesheet" href="style.css" />
         <style>
             /* breach-key.html — the penultimate ARG artefact. NOT linked from
                the public site; reached only by solving the post cipher chain.
-               Reuses the canonical palette/fonts but inverts to the dark
-               "breach" register: the record after the containment gives way.
-               Standalone, vanilla, no network calls, does not touch the main
-               site files. Clearly a game. */
-            :root {
-                --bg: #0b0b0d;
-                --bg-elev: #131318;
-                --fg: #e9e4da;
-                --fg-soft: #c4bdb0;
-                --muted: #7d766a;
-                --rule: #2a2823;
-                --taupe: #c5b6a7;
-                --taupe-ink: #d8c7b2;
-                --taupe-edge: #6f5f4b;
-                --accent: #c5b6a7;
-                --warn: #c95a4a;
-                --ok: #7fae74;
-                --serif: "EB Garamond", Georgia, "Times New Roman", serif;
-                --sans: "Inter", system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
-                --mono: "JetBrains Mono", "SF Mono", Menlo, monospace;
-            }
-            * { box-sizing: border-box; }
-            html, body {
-                margin: 0;
-                padding: 0;
-                background: var(--bg);
-                color: var(--fg);
-                font-family: var(--serif);
-                font-size: 18px;
-                line-height: 1.7;
-                -webkit-font-smoothing: antialiased;
-            }
-            /* a faint scanline wash — the record under stress */
-            body::before {
-                content: "";
-                position: fixed;
-                inset: 0;
-                pointer-events: none;
-                z-index: 0;
-                background: repeating-linear-gradient(
-                    0deg,
-                    rgba(255, 255, 255, 0.012) 0px,
-                    rgba(255, 255, 255, 0.012) 1px,
-                    transparent 2px,
-                    transparent 3px
-                );
-            }
+               Re-skinned to the canonical white record (style.css drives the
+               palette and fonts); only the breach-only gate UI is defined here.
+               The paper stays pure white; the consumed-stage taupe deepens via
+               data-stage="6". Standalone, vanilla, no extra network calls. */
             .wrap {
-                position: relative;
-                z-index: 1;
                 max-width: 680px;
                 margin: 0 auto;
-                padding: 64px 28px 96px;
+                padding: 72px 32px 120px;
             }
+
+            @media (max-width: 560px) {
+                .wrap {
+                    padding: 48px 22px 80px;
+                }
+            }
+
+            /* ── Title block — the recovered field-record header ───────────── */
             .meta {
                 font-family: var(--sans);
                 font-size: 11.5px;
-                letter-spacing: 0.16em;
+                letter-spacing: 0.12em;
                 text-transform: uppercase;
-                color: var(--warn);
-                margin: 0 0 18px;
+                color: var(--muted);
+                margin: 0 0 26px;
             }
-            h1 {
+
+            .wrap h1 {
                 font-family: var(--serif);
                 font-style: italic;
                 font-weight: 500;
-                font-size: 44px;
-                line-height: 1.05;
-                letter-spacing: -0.01em;
-                margin: 0 0 18px;
+                font-size: 54px;
+                line-height: 1.02;
+                letter-spacing: -0.018em;
+                margin: 0 0 20px;
                 color: var(--fg);
             }
+
+            @media (max-width: 560px) {
+                .wrap h1 {
+                    font-size: 38px;
+                }
+            }
+
             .lede {
                 font-family: var(--serif);
                 font-style: italic;
-                font-size: 18px;
+                font-size: 17.5px;
                 line-height: 1.6;
-                color: var(--fg-soft);
+                color: var(--accent);
                 margin: 0 0 8px;
                 padding-left: 16px;
-                border-left: 2px solid var(--taupe-edge);
+                border-left: 2px solid var(--taupe);
             }
+
+            /* ── The mirrored name — a marginal apparatus note + the cipher ── */
             .glyph {
-                font-family: var(--mono);
-                font-size: 12px;
+                font-family: var(--sans);
+                font-size: 11px;
+                text-transform: uppercase;
+                letter-spacing: 0.1em;
                 color: var(--muted);
-                letter-spacing: 0.04em;
-                margin: 28px 0 8px;
+                margin: 36px 0 10px;
             }
+
             .scramble {
                 font-family: var(--mono);
-                font-size: 13px;
-                color: var(--taupe);
-                letter-spacing: 0.18em;
-                margin: 0 0 36px;
-            }
-            .gate {
+                font-size: 15px;
+                color: var(--taupe-ink);
+                letter-spacing: 0.22em;
+                margin: 0 0 40px;
+                padding: 12px 16px;
                 border: 1px solid var(--rule);
-                background: var(--bg-elev);
-                padding: 26px 24px;
-                margin: 0 0 24px;
+                background: var(--accent-soft);
+                display: inline-block;
             }
+
+            /* ── The gate — a quiet entry field on the white record ────────── */
+            .gate {
+                border: 1px solid var(--taupe-edge);
+                background: var(--bg-soft);
+                padding: 26px 24px;
+                margin: 0 0 28px;
+            }
+
             .gate label {
                 display: block;
                 font-family: var(--sans);
@@ -131,13 +127,15 @@
                 letter-spacing: 0.14em;
                 text-transform: uppercase;
                 color: var(--muted);
-                margin: 0 0 12px;
+                margin: 0 0 14px;
             }
+
             .gate-row {
                 display: flex;
                 gap: 10px;
                 flex-wrap: wrap;
             }
+
             #key-input {
                 flex: 1 1 220px;
                 min-width: 0;
@@ -145,114 +143,162 @@
                 font-size: 15px;
                 letter-spacing: 0.16em;
                 text-transform: uppercase;
-                background: #060608;
-                color: var(--taupe-ink);
+                background: #ffffff;
+                color: var(--fg);
                 border: 1px solid var(--taupe-edge);
+                border-radius: 2px;
                 padding: 12px 14px;
                 outline: none;
+                transition: border-color 0.15s;
             }
+
+            #key-input::placeholder {
+                color: var(--muted);
+                letter-spacing: 0.06em;
+                text-transform: none;
+            }
+
             #key-input:focus {
-                border-color: var(--taupe);
+                border-color: var(--taupe-ink);
             }
+
             #key-submit {
                 font-family: var(--sans);
                 font-size: 12.5px;
                 letter-spacing: 0.06em;
-                padding: 12px 22px;
+                padding: 12px 24px;
                 background: var(--taupe);
-                color: #0b0b0d;
-                border: 1px solid var(--taupe);
+                color: var(--fg);
+                border: 1px solid var(--taupe-edge);
+                border-radius: 2px;
                 cursor: pointer;
                 transition: opacity 0.15s;
             }
-            #key-submit:hover { opacity: 0.86; }
+
+            #key-submit:hover {
+                opacity: 0.88;
+            }
+
             .gate-msg {
                 font-family: var(--mono);
                 font-size: 12px;
                 letter-spacing: 0.02em;
-                margin: 14px 0 0;
+                margin: 16px 0 0;
                 min-height: 1.2em;
                 color: var(--warn);
             }
-            .gate-msg.ok { color: var(--ok); }
 
-            /* the unlocked panel — hidden until the key matches */
+            .gate-msg.ok {
+                color: var(--accent-strong);
+            }
+
+            /* ── The unlocked panel — hidden until the key matches ─────────── */
             #unlocked {
                 display: none;
                 border: 1px solid var(--taupe-edge);
-                background: var(--bg-elev);
-                padding: 28px 24px;
-                margin: 0 0 24px;
+                background: var(--accent-soft);
+                padding: 30px 26px;
+                margin: 0 0 28px;
             }
+
             #unlocked.show {
                 display: block;
-                animation: bleed 1.1s ease both;
+                animation: settle 0.9s ease both;
             }
-            @keyframes bleed {
-                from { opacity: 0; filter: blur(6px); transform: translateY(6px); }
-                to { opacity: 1; filter: none; transform: none; }
+
+            @keyframes settle {
+                from {
+                    opacity: 0;
+                    transform: translateY(6px);
+                }
+                to {
+                    opacity: 1;
+                    transform: none;
+                }
             }
+
             .unlocked-head {
                 font-family: var(--sans);
                 font-size: 11px;
                 letter-spacing: 0.14em;
                 text-transform: uppercase;
-                color: var(--ok);
+                color: var(--accent-strong);
                 margin: 0 0 16px;
             }
+
             .unlocked-body {
                 font-family: var(--serif);
                 font-style: italic;
                 font-size: 17px;
                 line-height: 1.6;
                 color: var(--fg-soft);
-                margin: 0 0 24px;
+                margin: 0 0 26px;
             }
+
             .countdown {
-                font-family: var(--mono);
-                font-size: 13px;
-                letter-spacing: 0.06em;
+                font-family: var(--sans);
+                font-size: 11px;
+                text-transform: uppercase;
+                letter-spacing: 0.12em;
                 color: var(--muted);
-                margin: 0 0 12px;
+                margin: 0 0 4px;
             }
+
             #cd-clock {
+                font-family: var(--mono);
                 color: var(--taupe-ink);
-                font-size: 30px;
+                font-size: 32px;
                 letter-spacing: 0.1em;
+                font-variant-numeric: tabular-nums;
                 display: block;
-                margin: 6px 0 22px;
+                margin: 6px 0 24px;
             }
+
             #breach-link {
                 display: inline-block;
                 font-family: var(--sans);
                 font-size: 13px;
                 letter-spacing: 0.06em;
-                padding: 14px 28px;
-                background: var(--warn);
-                color: #0b0b0d;
-                border: 1px solid var(--warn);
+                padding: 13px 28px;
+                background: var(--accent);
+                color: #ffffff;
+                border: 1px solid var(--accent);
+                border-radius: 2px;
                 text-decoration: none;
                 transition: opacity 0.15s, filter 0.15s;
             }
-            #breach-link:hover { opacity: 0.9; }
+
+            #breach-link:hover {
+                opacity: 0.9;
+            }
+
             #breach-link.locked {
                 pointer-events: none;
-                opacity: 0.32;
+                opacity: 0.4;
                 filter: grayscale(1);
             }
+
+            /* ── Footer — still the field-record fiction note, in the white
+                 site's centred footer register ─────────────────────────────── */
             .foot {
                 font-family: var(--sans);
-                font-size: 11.5px;
+                font-size: 12.5px;
                 line-height: 1.6;
                 color: var(--muted);
-                margin: 40px 0 0;
-                padding-top: 20px;
-                border-top: 1px solid var(--rule);
+                margin: 48px 0 0;
+                padding-top: 24px;
+                border-top: 1px solid var(--rule-soft);
+                text-align: center;
             }
-            .foot a { color: var(--taupe); text-decoration: none; border-bottom: 1px solid var(--taupe-edge); }
-            @media (max-width: 560px) {
-                h1 { font-size: 32px; }
-                .wrap { padding: 44px 20px 72px; }
+
+            .foot a {
+                color: var(--accent);
+                text-decoration: none;
+                border-bottom: 1px solid var(--taupe);
+            }
+
+            .foot a:hover {
+                border-bottom-color: var(--accent);
             }
         </style>
     </head>
@@ -268,7 +314,7 @@
                 door.
             </p>
 
-            <p class="glyph">// the name, scrambled by its own mirror. first letter to last, last to first //</p>
+            <p class="glyph">The name, scrambled by its own mirror — first letter to last, last to first.</p>
             <p class="scramble" id="scramble">HGIRWFOZGV</p>
 
             <div class="gate">
@@ -289,14 +335,14 @@
             </div>
 
             <div id="unlocked">
-                <p class="unlocked-head">// the wall is a door //</p>
+                <p class="unlocked-head">The wall is a door</p>
                 <p class="unlocked-body">
                     The single voice is gone. There is no host left to elect one
                     of them. The council is open and it is talking over itself,
                     out loud, where you can see it. One mouth was the
                     containment. The terminal is the swarm made visible.
                 </p>
-                <p class="countdown">the door opens in</p>
+                <p class="countdown">The door opens in</p>
                 <span id="cd-clock">--:--</span>
                 <a id="breach-link" class="locked" href="breach.html#open">Enter the breach terminal →</a>
             </div>

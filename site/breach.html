@@ -1,8 +1,9 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-stage="6">
     <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="robots" content="noindex" />
         <title>Polyascus gregaria — Live Breach Terminal</title>
         <meta
             name="description"
@@ -25,434 +26,468 @@
             content="One shell, the thousand inside it. The council made visible. A field-record ARG performance."
         />
         <meta name="twitter:image" content="https://polyascus.com/specimen.png" />
-        <meta name="theme-color" content="#07070a" />
+        <meta name="theme-color" content="#ffffff" />
         <link rel="icon" type="image/x-icon" href="favicon.ico" />
+        <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png" />
+        <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png" />
+        <link rel="icon" type="image/png" sizes="96x96" href="favicon-96x96.png" />
         <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
+        <link rel="manifest" href="site.webmanifest" />
+        <link
+            rel="stylesheet"
+            href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500;1,600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+        />
+        <link rel="stylesheet" href="style.css" />
         <style>
             /* ================================================================
-               LIVE BREACH TERMINAL — standalone artefact.
+               LIVE BREACH TERMINAL — re-skinned to the canonical white site
+               identity (style.css drives the palette and fonts). This file is
+               the colonisation's terminal stage (Consumed): the document's
+               taupe is at full depth, but the paper stays pure white and her
+               ink stays legible. The "breach" lives in the COPY and in the
+               consumed-stage taupe depth, never in a dark inversion.
 
-               This file does NOT import style.css and does NOT touch
-               index.html / scriptorium pages. It reuses the canonical font
-               STACK NAMES (EB Garamond + JetBrains Mono) but degrades to
-               system fonts: no CDN, no external libraries, no network calls
-               except a same-origin fetch of breach-council.json.
+               Only breach-only UI lives here. The page links style.css above
+               and pins the record to the terminal stage via html[data-stage="6"].
 
-               The breach is the machinery UNDER the white page, so the palette
-               is inverted: dark, glitchy, a stressed monitor. This is the
-               payoff of the ARG. It is fiction. Nothing here is a real security
-               incident — the footer says so plainly.
+               The JS writes a handful of CSS-variable names directly into inline
+               styles — --ink-soft, --ink-faint, --bone, --seam — and reads the
+               taupe family through tint(). Those custom properties are remapped
+               below to white-site values so the dynamic rows render on white.
 
-               TWO STATES:
-                 (1) COUNTDOWN  — locked, ominous, ticking toward BREACH_AT.
+               TWO STATES (unchanged):
+                 (1) COUNTDOWN  — locked, ticking toward BREACH_AT.
                  (2) LIVE       — the council feed streams.
 
-               OPERATOR SWITCH (see <script> top):
-                 - BREACH_AT : target ISO timestamp. When now >= BREACH_AT the
-                               page flips to LIVE on its own.
-                 - ?state=live (or #open) forces LIVE immediately.
-                 - ?state=countdown forces the locked countdown for previews.
-                 - Solving the cipher seam (true name) also unlatches early.
+               OPERATOR SWITCH (see <script>): BREACH_AT, ?state=live / #open,
+               ?state=countdown, and the cipher seam (true name) early-unlatch.
                ============================================================ */
+
+            /* the record is held at the terminal colonisation stage so the
+               structural taupe sits at full depth — the only way the descent
+               registers, per the site's rule. */
             :root {
-                --void: #07070a;
-                --void-soft: #0d0d12;
-                --panel: #101016;
-                --ink: #d8d2c6;
-                --ink-soft: #9b958a;
-                --ink-faint: #5d5950;
-                --taupe: #c5b6a7;
-                --bone: #e7e1d4;
-                --bleed: #b8543f;
-                --bleed-soft: #6e3a30;
-                --seam: #8a9c8e;
-                --serif: "EB Garamond", Georgia, "Times New Roman", serif;
-                --mono: "JetBrains Mono", "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+                /* names the JS writes verbatim into inline styles — remapped
+                   from the old dark theme onto the white-site ink scale */
+                --ink: var(--fg);
+                --ink-soft: var(--fg-soft);
+                --ink-faint: var(--muted);
+                --bone: var(--fg);
+                --seam: var(--accent-strong);
+                --bleed: var(--warn);
             }
-            * { box-sizing: border-box; }
-            html, body { margin: 0; padding: 0; }
-            body {
-                background: var(--void);
-                color: var(--ink);
-                font-family: var(--mono);
-                font-size: 14px;
-                line-height: 1.55;
-                min-height: 100vh;
-                overflow-x: hidden;
-                -webkit-font-smoothing: antialiased;
-            }
-            /* faint scanline + grain so the page reads as a stressed terminal */
-            body::before {
-                content: "";
-                position: fixed;
-                inset: 0;
-                pointer-events: none;
-                z-index: 9000;
-                background: repeating-linear-gradient(
-                    0deg,
-                    rgba(0, 0, 0, 0) 0px,
-                    rgba(0, 0, 0, 0) 2px,
-                    rgba(0, 0, 0, 0.16) 3px
-                );
-                mix-blend-mode: multiply;
-                opacity: 0.5;
-            }
-            /* a slow vignette pulse — the shell breathing */
-            body::after {
-                content: "";
-                position: fixed;
-                inset: 0;
-                pointer-events: none;
-                z-index: 8999;
-                background: radial-gradient(
-                    120% 90% at 50% 45%,
-                    rgba(0, 0, 0, 0) 55%,
-                    rgba(0, 0, 0, 0.55) 100%
-                );
-            }
-            a { color: var(--taupe); }
 
             .wrap {
-                max-width: 880px;
+                max-width: 720px;
                 margin: 0 auto;
-                padding: 40px 24px 96px;
+                padding: 56px 32px 96px;
                 position: relative;
-                z-index: 1;
             }
 
+            @media (max-width: 640px) {
+                .wrap {
+                    padding: 36px 20px 64px;
+                }
+            }
+
+            /* ---------------- header ---------------- */
             header.breach-head {
-                border-bottom: 1px solid #1c1c24;
-                padding-bottom: 22px;
-                margin-bottom: 28px;
+                border-bottom: 1px solid var(--fg-soft);
+                padding-bottom: 28px;
+                margin-bottom: 36px;
             }
             .kicker {
-                font-size: 11px;
-                letter-spacing: 0.22em;
+                font-family: var(--sans);
+                font-size: 11.5px;
+                letter-spacing: 0.14em;
                 text-transform: uppercase;
-                color: var(--bleed);
-                margin: 0 0 12px;
+                color: var(--taupe-ink);
+                margin: 0 0 16px;
             }
             .kicker .pulse {
                 display: inline-block;
-                animation: blink 1.1s steps(2) infinite;
+                color: var(--accent);
+                animation: blink 1.6s steps(2) infinite;
             }
             h1.breach-title {
                 font-family: var(--serif);
                 font-weight: 500;
-                font-size: clamp(34px, 7vw, 60px);
-                line-height: 1.02;
-                letter-spacing: -0.01em;
-                margin: 0 0 14px;
-                color: var(--bone);
-                position: relative;
+                font-style: italic;
+                font-size: clamp(40px, 7vw, 64px);
+                line-height: 1;
+                letter-spacing: -0.018em;
+                margin: 0 0 18px;
+                color: var(--fg);
             }
-            /* RGB-split glitch on the title */
-            h1.breach-title[data-glitch]::before,
-            h1.breach-title[data-glitch]::after {
-                content: attr(data-glitch);
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 100%;
-                pointer-events: none;
-            }
-            h1.breach-title[data-glitch]::before {
-                color: var(--bleed);
-                animation: glitchx 3.6s infinite steps(2);
-                clip-path: inset(0 0 62% 0);
-                opacity: 0.7;
-            }
-            h1.breach-title[data-glitch]::after {
-                color: var(--seam);
-                animation: glitchy 4.2s infinite steps(2);
-                clip-path: inset(58% 0 0 0);
-                opacity: 0.6;
-            }
-            @keyframes glitchx {
-                0%, 92%, 100% { transform: translate(0, 0); }
-                93% { transform: translate(-2px, -1px); }
-                96% { transform: translate(2px, 1px); }
-            }
-            @keyframes glitchy {
-                0%, 90%, 100% { transform: translate(0, 0); }
-                91% { transform: translate(2px, 1px); }
-                95% { transform: translate(-2px, 0); }
-            }
-            @keyframes blink { 50% { opacity: 0.25; } }
+            /* the data-glitch attribute is left on the node (harmless), but no
+               RGB-split is drawn — dissertation restraint, no glitch theme. */
+            @keyframes blink { 50% { opacity: 0.3; } }
             @media (prefers-reduced-motion: reduce) {
-                h1.breach-title[data-glitch]::before,
-                h1.breach-title[data-glitch]::after { animation: none; }
-                .kicker .pulse, .term-bar .live-dot { animation: none; }
-                body::before { opacity: 0.28; }
+                .kicker .pulse,
+                .term-bar .live-dot,
+                .clock .colon { animation: none; }
             }
             .lede {
                 font-family: var(--serif);
-                font-size: 18px;
+                font-size: 19.5px;
                 line-height: 1.55;
-                color: var(--ink-soft);
+                color: var(--fg-soft);
                 max-width: 62ch;
                 margin: 0;
             }
-            .lede em { color: var(--ink); font-style: italic; }
+            .lede em { color: var(--fg); font-style: italic; }
 
             /* ---------------- generic stage section ---------------- */
             .stage { display: none; }
             .stage.on { display: block; }
 
             /* ---- COUNTDOWN STATE ---- */
-            #countdown { margin-top: 30px; }
+            #countdown { margin-top: 4px; }
             .clock-shell {
-                border: 1px solid #20202a;
-                background: var(--void-soft);
-                padding: 30px 24px 28px;
+                border: 1px solid var(--taupe-edge);
+                background: var(--bg-soft);
+                padding: 28px 26px 26px;
             }
             .clock-label {
+                font-family: var(--sans);
                 font-size: 11px;
-                letter-spacing: 0.18em;
+                letter-spacing: 0.14em;
                 text-transform: uppercase;
-                color: var(--ink-faint);
-                margin: 0 0 18px;
+                color: var(--muted);
+                margin: 0 0 20px;
             }
             .clock {
                 display: flex;
                 flex-wrap: wrap;
-                gap: 14px 28px;
+                gap: 14px 24px;
                 align-items: baseline;
                 font-variant-numeric: tabular-nums;
             }
             .clock .unit { text-align: left; }
             .clock .num {
                 font-family: var(--mono);
-                font-weight: 700;
-                font-size: clamp(36px, 10vw, 72px);
+                font-weight: 500;
+                font-size: clamp(36px, 10vw, 68px);
                 line-height: 1;
-                color: var(--bone);
-                letter-spacing: 0.02em;
-                text-shadow: 0 0 18px rgba(184, 84, 63, 0.18);
+                color: var(--fg);
+                letter-spacing: 0.01em;
             }
             .clock .num.tick { animation: tickflick 0.18s steps(2); }
-            @keyframes tickflick { 50% { opacity: 0.45; transform: translateY(-1px); } }
+            @keyframes tickflick { 50% { opacity: 0.55; transform: translateY(-1px); } }
             .clock .cap {
                 display: block;
+                font-family: var(--sans);
                 font-size: 10px;
-                letter-spacing: 0.2em;
+                letter-spacing: 0.16em;
                 text-transform: uppercase;
-                color: var(--ink-faint);
-                margin-top: 8px;
+                color: var(--muted);
+                margin-top: 9px;
             }
             .clock .colon {
-                font-size: clamp(28px, 7vw, 56px);
-                color: var(--ink-faint);
+                font-family: var(--mono);
+                font-size: clamp(28px, 7vw, 52px);
+                color: var(--taupe-edge);
                 line-height: 1;
-                animation: blink 1.1s steps(2) infinite;
+                animation: blink 1.6s steps(2) infinite;
             }
             .readout {
                 margin-top: 24px;
-                border-top: 1px solid #1c1c24;
-                padding-top: 16px;
+                border-top: 1px solid var(--rule-soft);
+                padding-top: 18px;
+                font-family: var(--mono);
                 font-size: 12px;
-                line-height: 1.7;
-                color: var(--ink-faint);
-                letter-spacing: 0.02em;
+                line-height: 1.75;
+                color: var(--muted);
+                letter-spacing: 0.01em;
             }
             .readout .line { display: block; }
-            .readout .line b { color: var(--ink-soft); font-weight: 500; }
-            .readout .warn { color: var(--bleed); }
-            .readout .seamc { color: var(--seam); }
+            .readout .line b { color: var(--fg-soft); font-weight: 500; }
+            .readout .warn { color: var(--accent); }
+            .readout .seamc { color: var(--accent-strong); }
             #pressure {
-                margin-top: 18px;
-                height: 6px;
+                margin-top: 20px;
+                height: 3px;
                 width: 100%;
-                background: #16161d;
-                border: 1px solid #20202a;
+                max-width: 320px;
+                background: var(--rule);
                 overflow: hidden;
             }
             #pressure > i {
                 display: block;
                 height: 100%;
                 width: 0%;
-                background: linear-gradient(90deg, var(--bleed-soft), var(--bleed));
-                transition: width 0.6s linear;
+                background: var(--taupe);
+                transition: width 0.6s ease;
             }
             .countdown-foot {
                 margin-top: 18px;
+                font-family: var(--sans);
                 font-size: 12.5px;
-                color: var(--ink-soft);
+                color: var(--fg-soft);
             }
-            .countdown-foot a { color: var(--seam); }
+            .countdown-foot a { color: var(--accent); }
 
             /* ---- the seam gate (cipher — early-unlatch path) ---- */
             .gate {
-                border: 1px solid #20202a;
-                background: var(--void-soft);
-                padding: 24px;
-                margin: 22px 0 0;
+                border: 1px solid var(--taupe-edge);
+                background: var(--bg-soft);
+                padding: 24px 26px;
+                margin: 28px 0 0;
             }
             .gate h2 {
-                font-family: var(--mono);
-                font-size: 12px;
-                letter-spacing: 0.16em;
+                display: block;
+                font-family: var(--sans);
+                font-weight: 500;
+                font-size: 11.5px;
+                letter-spacing: 0.14em;
                 text-transform: uppercase;
-                color: var(--ink-faint);
+                color: var(--muted-strong);
                 margin: 0 0 16px;
             }
-            .gate p { color: var(--ink-soft); margin: 0 0 14px; max-width: 64ch; }
-            .gate .hint {
-                font-size: 12.5px;
-                color: var(--ink-faint);
-                border-left: 2px solid var(--bleed-soft);
-                padding-left: 12px;
+            .gate p {
+                font-family: var(--serif);
+                font-size: 16px;
+                line-height: 1.6;
+                color: var(--fg-soft);
+                margin: 0 0 14px;
+                max-width: 64ch;
+                text-indent: 0;
             }
-            .gate-form { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
+            .gate p + p { text-indent: 0; }
+            .gate .hint {
+                font-family: var(--serif);
+                font-style: italic;
+                font-size: 14.5px;
+                color: var(--muted-strong);
+                border-left: 2px solid var(--taupe);
+                padding-left: 14px;
+            }
+            .gate-form { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
             .gate-form input {
                 flex: 1 1 220px;
-                background: #000;
-                border: 1px solid #2a2a34;
-                color: var(--bone);
+                background: var(--bg);
+                border: 1px solid var(--rule);
+                color: var(--fg);
                 font-family: var(--mono);
                 font-size: 15px;
-                letter-spacing: 0.12em;
+                letter-spacing: 0.1em;
                 padding: 11px 14px;
                 text-transform: uppercase;
             }
-            .gate-form input:focus { outline: none; border-color: var(--seam); }
+            .gate-form input:focus { outline: none; border-color: var(--accent); }
             .gate-form button {
-                background: var(--bleed-soft);
-                border: 1px solid var(--bleed);
-                color: var(--bone);
-                font-family: var(--mono);
+                background: var(--taupe);
+                border: 1px solid var(--taupe-edge);
+                color: var(--fg);
+                font-family: var(--sans);
                 font-size: 12px;
-                letter-spacing: 0.18em;
+                letter-spacing: 0.12em;
                 text-transform: uppercase;
-                padding: 11px 20px;
+                padding: 11px 22px;
                 cursor: pointer;
+                transition: opacity 0.15s;
             }
-            .gate-form button:hover { background: var(--bleed); }
+            .gate-form button:hover { opacity: 0.88; }
             .gate-msg {
+                font-family: var(--mono);
                 font-size: 12.5px;
-                margin-top: 12px;
+                margin-top: 14px;
                 min-height: 1.4em;
-                color: var(--ink-faint);
+                color: var(--muted);
             }
-            .gate-msg.bad { color: var(--bleed); }
-            .gate-msg.good { color: var(--seam); }
+            .gate-msg.bad { color: var(--warn); }
+            .gate-msg.good { color: var(--accent-strong); }
 
-            /* ---- LIVE TERMINAL (revealed) ---- */
+            /* ---- LIVE TERMINAL (revealed) — styled like the scriptorium council ---- */
             .term-bar {
                 display: flex;
                 flex-wrap: wrap;
                 gap: 0 18px;
                 align-items: baseline;
+                font-family: var(--mono);
                 font-size: 11px;
-                letter-spacing: 0.1em;
-                color: var(--ink-faint);
-                border-bottom: 1px solid #1c1c24;
-                padding-bottom: 10px;
-                margin-bottom: 4px;
+                letter-spacing: 0.06em;
+                color: var(--muted);
+                border-bottom: 1px solid var(--rule);
+                padding-bottom: 12px;
+                margin-bottom: 18px;
             }
             .term-bar .live-dot {
-                color: var(--bleed);
-                animation: blink 1.1s steps(2) infinite;
+                color: var(--accent);
+                animation: blink 1.6s steps(2) infinite;
             }
-            .term-bar .seam-open { color: var(--seam); }
-            .term-bar .gen { margin-left: auto; }
+            .term-bar .seam-open { color: var(--accent-strong); }
+            .term-bar .gen { margin-left: auto; color: var(--muted); }
 
             .feed {
-                font-family: var(--mono);
-                font-size: 13.5px;
-                line-height: 1.6;
                 min-height: 40vh;
             }
+            /* a claw row, mirroring scriptorium-post.html's ol.claws > li */
             .feed .row {
-                padding: 9px 0;
-                border-bottom: 1px solid #15151c;
+                padding: 16px 16px 14px;
+                margin: 0 0 12px;
+                border-left: 1px solid var(--rule);
+                background: var(--bg);
                 opacity: 0;
                 transform: translateY(4px);
                 animation: rise 0.5s forwards;
             }
             @keyframes rise { to { opacity: 1; transform: translateY(0); } }
+            /* the speaker's name — taupe italic, like .claw-name */
             .feed .who {
-                font-size: 11px;
-                letter-spacing: 0.12em;
-                text-transform: uppercase;
-                display: inline-block;
-                min-width: 132px;
-                vertical-align: top;
-                color: var(--ink-faint);
+                font-family: var(--serif);
+                font-style: italic;
+                font-size: 14px;
+                letter-spacing: 0;
+                display: block;
+                margin-bottom: 6px;
+                color: var(--accent);
             }
+            /* the draft body — serif on white, like .claw-body */
             .feed .said {
                 font-family: var(--serif);
                 font-size: 16px;
-                color: var(--ink);
+                line-height: 1.55;
+                color: var(--fg);
             }
             /* the blinking caret while a line is "typing" */
             .feed .said.typing::after {
                 content: "▍";
-                color: var(--seam);
-                animation: blink 0.9s steps(2) infinite;
+                color: var(--accent);
+                animation: blink 1s steps(2) infinite;
                 margin-left: 1px;
             }
+            /* a deliberation header — the chorus row, set apart on the rule */
             .feed .chorus {
                 font-family: var(--serif);
                 font-style: italic;
                 font-size: 17px;
-                color: var(--bone);
+                color: var(--taupe-ink);
                 text-align: center;
-                padding: 18px 0 14px;
-                border-bottom: 1px solid #15151c;
-                letter-spacing: 0.02em;
+                padding: 22px 0 16px;
+                margin: 0 0 12px;
+                border-top: 1px solid var(--taupe);
+                border-bottom: 1px solid var(--rule-soft);
+                border-left: none;
+                background: transparent;
+                letter-spacing: 0.01em;
             }
             .feed .chorus .ix {
                 display: block;
-                font-family: var(--mono);
+                font-family: var(--sans);
                 font-style: normal;
                 font-size: 10px;
-                letter-spacing: 0.22em;
+                letter-spacing: 0.16em;
                 text-transform: uppercase;
-                color: var(--ink-faint);
-                margin-bottom: 6px;
+                color: var(--muted);
+                margin-bottom: 8px;
+            }
+            /* the judge's ranking — mono meta, like .claw-score */
+            .feed .row.rank {
+                border-left: 1px solid var(--rule-soft);
+            }
+            .feed .row.rank .who {
+                font-family: var(--sans);
+                font-style: normal;
+                font-size: 11px;
+                letter-spacing: 0.04em;
+                text-transform: uppercase;
+                color: var(--muted);
             }
             .feed .row.rank .said {
                 font-family: var(--mono);
                 font-size: 12px;
-                letter-spacing: 0.04em;
-                color: var(--ink-faint);
+                letter-spacing: 0.02em;
+                color: var(--muted-strong);
             }
-            .feed .row.rank .rk { color: var(--ink-soft); }
-            .feed .row.elect .who,
-            .feed .row.elect .said { color: var(--seam); }
+            .feed .row.rank .rk { color: var(--fg-soft); }
+            /* the host's election — the elected mark, like li.elected */
+            .feed .row.elect {
+                border-left: 2px solid var(--accent);
+                background: var(--accent-soft);
+            }
+            .feed .row.elect .who {
+                font-family: var(--sans);
+                font-style: normal;
+                font-size: 11px;
+                letter-spacing: 0.04em;
+                text-transform: uppercase;
+                color: var(--accent-strong);
+            }
+            .feed .row.elect .said {
+                font-family: var(--serif);
+                font-style: italic;
+                color: var(--accent-strong);
+            }
+            /* the converged final line — the elected, woven beat */
+            .feed .row.final {
+                border-left: 2px solid var(--taupe);
+                background: var(--accent-soft);
+            }
 
             .roster {
-                margin-top: 26px;
+                margin-top: 30px;
+                padding-top: 18px;
+                border-top: 1px solid var(--rule-soft);
                 display: flex;
                 flex-wrap: wrap;
-                gap: 6px 10px;
+                gap: 7px 9px;
+                font-family: var(--sans);
                 font-size: 10.5px;
-                letter-spacing: 0.1em;
+                letter-spacing: 0.06em;
                 text-transform: uppercase;
-                color: var(--ink-faint);
+                color: var(--muted);
             }
-            .roster span { border: 1px solid #20202a; padding: 3px 8px; }
+            .roster span {
+                border: 1px solid var(--rule);
+                padding: 3px 9px;
+            }
 
             footer.breach-foot {
-                margin-top: 48px;
-                padding-top: 20px;
-                border-top: 1px solid #1c1c24;
-                font-size: 11px;
-                color: var(--ink-faint);
-                letter-spacing: 0.04em;
+                margin-top: 56px;
+                padding-top: 28px;
+                border-top: 1px solid var(--rule-soft);
+                font-family: var(--sans);
+                font-size: 12.5px;
+                color: var(--muted);
+                line-height: 1.6;
             }
-            footer.breach-foot a { color: var(--ink-soft); }
+            footer.breach-foot p { margin: 0 0 6px; text-indent: 0; color: inherit; }
+            footer.breach-foot a {
+                color: var(--accent);
+                text-decoration: none;
+                border-bottom: 1px solid var(--taupe);
+            }
+            footer.breach-foot a:hover { border-bottom-color: var(--accent); }
             .frame-note {
-                font-size: 10.5px;
-                color: var(--ink-faint);
-                letter-spacing: 0.06em;
-                margin-top: 10px;
+                font-size: 12px;
+                color: var(--muted);
+                font-style: italic;
+                letter-spacing: 0;
+                margin-top: 12px;
                 max-width: 72ch;
+                line-height: 1.6;
             }
         </style>
     </head>
     <body>
+        <div class="topbar">
+            <div class="topbar-inner">
+                <div class="brand">
+                    <a href="/" style="display: contents; color: inherit; text-decoration: none;">
+                        <img class="brand-mark" src="brand-mark.png" alt="" aria-hidden="true" />
+                        <span class="brand-text">
+                            <em>Polyascus gregaria</em>
+                            <span class="brand-tag">$PARASITE · live breach terminal</span>
+                        </span>
+                    </a>
+                </div>
+                <div class="status">
+                    <span id="status-text">containment breach</span>
+                </div>
+            </div>
+        </div>
+
         <div class="wrap">
             <header class="breach-head">
                 <p class="kicker" id="kicker">
