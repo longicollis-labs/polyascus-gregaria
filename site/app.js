@@ -360,6 +360,14 @@ function fmtSolLadder(lamports) {
     return s.replace(/\.?0+$/, "");
 }
 
+// Finer SOL formatter for the live progress line: keeps two decimals past 1 ◎
+// (three below), so a ~0.01 ◎ feed still moves the number. fmtSolLadder rounds
+// ≥10 ◎ to whole, which made the slow final-leg climb read as frozen.
+function fmtSolFine(lamports) {
+    const sol = lamports / 1e9;
+    return (sol >= 1 ? sol.toFixed(2) : sol.toFixed(3)).replace(/\.?0+$/, "");
+}
+
 async function refreshStage() {
     const stageEl = document.getElementById("infection-stage");
     const ladder = document.getElementById("stage-ladder");
@@ -380,6 +388,13 @@ async function refreshStage() {
         const stage = bytes[120];
         liveStageName = STAGE_NAMES[Math.min(stage, 6)] || liveStageName;
         const fed = u64(121);
+
+        // How far she is along the current leg (prev→next threshold). One source
+        // of truth for the spine fill, the gauge, and the percent in the line.
+        const prevTh = stage === 0 ? 0 : thresholds[stage - 1] ?? 0;
+        const nextTh = thresholds[stage] ?? 0; // undefined once she is Consumed
+        const legFrac =
+            stage >= 6 ? 1 : nextTh > prevTh ? Math.max(0, Math.min(1, (fed - prevTh) / (nextTh - prevTh))) : 0;
 
         if (stageEl) stageEl.textContent = STAGE_NAMES[Math.min(stage, 6)] || "dormant";
 
@@ -406,10 +421,7 @@ async function refreshStage() {
                 li.classList.toggle("current", s === stage);
                 // creeping fill: the current node's spine segment advances toward the next stage
                 if (s === stage && stage < 6) {
-                    const prev = stage === 0 ? 0 : thresholds[stage - 1];
-                    const next = thresholds[stage];
-                    const frac = next > prev ? Math.max(0, Math.min(1, (fed - prev) / (next - prev))) : 0;
-                    li.style.setProperty("--fill", (frac * 100).toFixed(1) + "%");
+                    li.style.setProperty("--fill", (legFrac * 100).toFixed(1) + "%");
                 } else {
                     li.style.removeProperty("--fill");
                 }
@@ -423,12 +435,17 @@ async function refreshStage() {
             const desc = ladder.querySelector(`li[data-stage="${Math.min(stage, 6)}"] .st-desc`);
             if (desc && desc.textContent.trim()) cond.textContent = desc.textContent.trim();
         }
+        // The gauge under the line: her crawl up the current leg, visible between
+        // feeds even when the rounded ◎ count holds still.
+        const bar = document.getElementById("feed-bar-fill");
+        if (bar) bar.style.width = (legFrac * 100).toFixed(1) + "%";
         if (prog) {
             if (stage >= 6) {
-                prog.textContent = `she is consumed · ${fmtSolLadder(fed)} ◎ fed in all · nothing remains to advance`;
+                prog.textContent = `she is consumed · ${fmtSolFine(fed)} ◎ fed in all · nothing remains to advance`;
             } else {
                 const remain = Math.max(0, thresholds[stage] - fed);
-                prog.textContent = `${fmtSolLadder(fed)} ◎ fed · ${fmtSolLadder(remain)} ◎ more tips her into ${STAGE_NAMES[stage + 1]}`;
+                // Two-decimal ◎ + a percent so the slow climb stays legible.
+                prog.textContent = `${fmtSolFine(fed)} ◎ fed · ${fmtSolFine(remain)} ◎ more tips her into ${STAGE_NAMES[stage + 1]} · ${Math.round(legFrac * 100)}%`;
             }
         }
     } catch (e) {

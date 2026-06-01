@@ -695,10 +695,29 @@ header.title .subtitle {
 }
 
 .feed-progress {
-    margin: 0 0 22px;
+    margin: 0 0 9px;
     font-family: var(--mono);
     font-size: 12px;
     color: var(--fg-soft);
+}
+
+/* a slim gauge under the progress line, same taupe-on-rule as the spine fill, so
+   her crawl up the final leg stays visible between feeds even when the rounded
+   ◎ count holds still */
+.feed-bar {
+    height: 3px;
+    max-width: 320px;
+    margin: 0 0 22px;
+    background: var(--rule);
+    overflow: hidden;
+}
+
+.feed-bar-fill {
+    display: block;
+    height: 100%;
+    width: 0;
+    background: var(--taupe);
+    transition: width 1.2s ease;
 }
 
 .feed {
