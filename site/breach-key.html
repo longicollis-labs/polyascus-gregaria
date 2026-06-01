@@ -338,7 +338,7 @@
             // you put in breach.html's BREACH_AT (your start time + ~6h). One source
             // of truth across both files so the two countdowns can't desync.
             // ?t=<unix-seconds> still overrides for previews.
-            const BREACH_AT = "2026-06-02T02:00:00Z"; // <-- MUST MATCH breach.html BREACH_AT
+            const BREACH_AT = "2026-06-01T22:21:00Z"; // <-- MUST MATCH breach.html BREACH_AT
             const OPEN_AT = Number.isFinite(tParam)
                 ? tParam
                 : Math.floor(Date.parse(BREACH_AT) / 1000) || 0;
