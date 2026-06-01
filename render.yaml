@@ -35,3 +35,9 @@ services:
         sync: false
       - key: POLYASCUS_PROGRAM_ID
         sync: false
+      # The claw-swarm: route each post through N claws -> judge -> host, where N
+      # grows with the colonisation stage (scale.ts; 12 at consumed). Flipped on
+      # once she reached the consumed stage, the medium enacting "one becoming
+      # many." Validated via `npm run swarm-dry` (N=12) before the flip.
+      - key: SWARM_ENABLED
+        value: "1"
