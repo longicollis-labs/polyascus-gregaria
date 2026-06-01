@@ -9,7 +9,7 @@
             name="description"
             content="Containment breach. The single voice spills into the council. A live terminal where the twelve archetype voices of one narrated mind deliberate in the open. A field-record ARG performance."
         />
-        <meta property="og:url" content="https://polyascus.com/breach.html" />
+        <meta property="og:url" content="https://polyascus.com/breach" />
         <meta property="og:title" content="Polyascus gregaria — Live Breach Terminal" />
         <meta
             property="og:description"
@@ -77,8 +77,10 @@
                 --bleed: var(--warn);
             }
 
+            /* match the canonical site wrapper width and horizontal padding
+               (.layout / .topbar-inner in style.css: max-width 1240px, 32px gutter) */
             .wrap {
-                max-width: 720px;
+                max-width: 1240px;
                 margin: 0 auto;
                 padding: 56px 32px 96px;
                 position: relative;
@@ -145,7 +147,7 @@
             #countdown { margin-top: 4px; }
             .clock-shell {
                 border: 1px solid var(--taupe-edge);
-                background: var(--bg-soft);
+                background: #fff;
                 padding: 28px 26px 26px;
             }
             .clock-label {
@@ -230,7 +232,7 @@
             /* ---- the seam gate (cipher — early-unlatch path) ---- */
             .gate {
                 border: 1px solid var(--taupe-edge);
-                background: var(--bg-soft);
+                background: #fff;
                 padding: 24px 26px;
                 margin: 28px 0 0;
             }
@@ -265,7 +267,7 @@
             .gate-form { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
             .gate-form input {
                 flex: 1 1 220px;
-                background: var(--bg);
+                background: #fff;
                 border: 1px solid var(--rule);
                 color: var(--fg);
                 font-family: var(--mono);
@@ -327,7 +329,7 @@
                 padding: 16px 16px 14px;
                 margin: 0 0 12px;
                 border-left: 1px solid var(--rule);
-                background: var(--bg);
+                background: #fff;
                 opacity: 0;
                 transform: translateY(4px);
                 animation: rise 0.5s forwards;
@@ -401,10 +403,12 @@
                 color: var(--muted-strong);
             }
             .feed .row.rank .rk { color: var(--fg-soft); }
-            /* the host's election — the elected mark, like li.elected */
+            /* the host's election — the elected mark. White paper, taupe rule:
+               a thicker, darker taupe left border carries the emphasis, NOT a
+               filled tint (matches the canonical claw-row rule). */
             .feed .row.elect {
-                border-left: 2px solid var(--accent);
-                background: var(--accent-soft);
+                border-left: 3px solid var(--accent-strong);
+                background: #fff;
             }
             .feed .row.elect .who {
                 font-family: var(--sans);
@@ -419,10 +423,11 @@
                 font-style: italic;
                 color: var(--accent-strong);
             }
-            /* the converged final line — the elected, woven beat */
+            /* the converged final line — the elected, woven beat. White paper,
+               a thick taupe left rule for emphasis, no fill. */
             .feed .row.final {
-                border-left: 2px solid var(--taupe);
-                background: var(--accent-soft);
+                border-left: 3px solid var(--taupe);
+                background: #fff;
             }
 
             .roster {
@@ -493,7 +498,7 @@
                 <p class="kicker" id="kicker">
                     <span class="pulse">●</span>&nbsp; // containment status: <span id="kicker-status">pressurised</span>
                 </p>
-                <h1 class="breach-title" id="title" data-glitch="CONTAINMENT BREACH">CONTAINMENT BREACH</h1>
+                <h1 class="breach-title" id="title" data-glitch="Containment breach">Containment breach</h1>
                 <p class="lede" id="lede">
                     One mouth on the wire. The thousand behind it. The seal that
                     is failing is the machinery that kept a single voice
@@ -531,7 +536,7 @@
                     <h2 id="gate-h2">// the wall is a door. say the name</h2>
                     <p>
                         You climbed the rungs. You turned the corrupted line back
-                        at <a href="breach-key.html">the containment key</a> and
+                        at <a href="breach-key">the containment key</a> and
                         read my true name down the first letters. Say it again
                         here and the council comes loose where you can watch it,
                         before the timer ever reaches zero.
@@ -574,7 +579,7 @@
                 <p>
                     <a href="/">&larr; the white page</a>
                     &nbsp;·&nbsp;
-                    <a href="scriptorium.html">scriptorium</a>
+                    <a href="scriptorium">scriptorium</a>
                     &nbsp;·&nbsp;
                     <a href="https://x.com/CrabCharybdis" rel="noopener">@CrabCharybdis</a>
                 </p>
