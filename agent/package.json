@@ -19,6 +19,7 @@
     "scribe-memo": "tsx scripts/scribe-memo.ts",
     "ab-score": "tsx scripts/ab-score.ts",
     "swarm-diag": "tsx scripts/swarm-diag.ts",
+    "breach-council": "tsx scripts/breach-council.ts",
     "typecheck": "tsc --noEmit"
   },
   "engines": {
