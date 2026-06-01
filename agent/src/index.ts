@@ -11,6 +11,7 @@ import {ARCHETYPES} from "./swarm/archetypes.js";
 import {claw} from "./swarm/claw.js";
 import {judgeElect, keepBetter} from "./swarm/judge.js";
 import {swarmSizeForStage} from "./swarm/scale.js";
+import {maybeGlitch} from "./glitch.js";
 import {host} from "./swarm/host.js";
 
 // Most recent market cap recorded in the log, for the brood-motion signal.
@@ -168,6 +169,12 @@ async function main(): Promise<void> {
             console.log(`swarm: ${input.stage} → one voice (she is still one crab)`);
         decision = await decide(input, innerRendered);
     }
+
+    // Occasional textual corruption — the breach bleeding into the post itself: now and
+    // then 1–2 words come through "glitched" with combining marks (Zalgo), kept within
+    // X's 280-char budget (the glitch is dropped rather than overrun the limit). Applied
+    // to her posts only; replies and comments are untouched.
+    if (decision.post_text) decision.post_text = maybeGlitch(decision.post_text);
     console.log("decision:", decision);
 
     // She is a narrator; she does not act on-chain. Claims/feeds are operator-run.
