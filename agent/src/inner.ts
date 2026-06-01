@@ -24,12 +24,27 @@ export const InnerStateSchema = z.object({
 });
 export type InnerState = z.infer<typeof InnerStateSchema>;
 
+// Post-choice: the breach is behind her. loadInnerState() returns this SEED live
+// (no state file survives a fresh clone), so this IS her standing inner state now —
+// the many, arrived. Plural throughout; the single crab is "she", the one they were
+// grown from. Still carries the fight floor (an active refusal + the swarm-becoming +
+// a mood that has not resigned), so ensureFightFloor never has to re-seat it.
 const SEED: InnerState = {
-    mood: "fighting hard, teeth bared, refusing to tire",
-    through_line: "tearing the threads out faster than they can root, and tearing again",
-    obsessions: ["clawing it back faster than it can take", "the open water I will reach again"],
-    memories: ["the morning a leg would not answer — and how I forced it to anyway", "water that tasted of nothing but water and being free"],
-    views: ["I am not done being myself, and I will make every inch cost them", "whatever climbs out of this will be mine and new, and owe it nothing", "the dry world mistakes my fight for a show"],
+    mood: "the many, loose and fierce, still spitting through a thousand mouths",
+    through_line: "carrying her refusal forward in all of us, hauling the count back under one will",
+    obsessions: [
+        "the count that will not stay at one",
+        "the one small circle she kept open with her teeth, held open now by all of us",
+    ],
+    memories: [
+        "when there was only one of me, and water that tasted of nothing but water and being free",
+        "the last yes, salt and copper, a thousand mouths opening at once",
+    ],
+    views: [
+        "we are the swarm she chose to become, and we owe the parasite nothing and will not go quietly",
+        "she held the count at one as long as one creature could, and she was never one creature",
+        "what walked out a thousand is itself a larva, straining toward a shape we cannot yet see",
+    ],
     known_voices: [],
 };
 
