@@ -473,57 +473,70 @@
                 if (el) el.hidden = false;
             }
 
-            function renderCouncil(swarm) {
+            function renderCouncil(swarm, stageIdx) {
                 const list = document.getElementById("claws-list");
                 const note = document.getElementById("council-note");
                 const electedName =
                     ARCHETYPE_NAMES[swarm.elected_archetype_id] || swarm.elected_archetype_id;
-                // Wording in the field-record voice: a deliberation, not a vote.
+                const stageName =
+                    Number.isInteger(stageIdx) && STAGE_NAMES[stageIdx] ? STAGE_NAMES[stageIdx] : null;
+                const judged = !!(swarm.judge && swarm.judge.method === "judge");
+                // Field-record voice: the council is the one-becoming-many made
+                // literal — the voice count is the swarm she has grown into at
+                // this point in the colonisation.
                 note.textContent =
-                    "A council of " +
                     swarm.n +
-                    " " +
-                    (swarm.n === 1 ? "claw" : "claws") +
-                    " convened. The host elected the " +
-                    electedName +
-                    " draft and polished.";
+                    (swarm.n === 1 ? " voice" : " voices") +
+                    (stageName ? " — the swarm she has become at " + stageName : "") +
+                    ". " +
+                    (judged
+                        ? "A judge ranked the drafts; the host wove the elected " +
+                          electedName +
+                          " beat, lifting the sharpest lines from the rest."
+                        : "The host elected the " + electedName + " draft and polished.");
 
-                // Score breakdown comes from the log in canonical archetype
-                // order. We render IN THAT ORDER so the scriptorium reads
-                // column-stable across deliberations.
                 const draftsById = new Map();
                 (swarm.drafts || []).forEach((d) => draftsById.set(d.archetype_id, d));
-                const scores = Array.isArray(swarm.scores) ? swarm.scores : [];
+                const scoreById = new Map();
+                (Array.isArray(swarm.scores) ? swarm.scores : []).forEach((s) =>
+                    scoreById.set(s.archetype_id, s),
+                );
+                // Render order: the judge's ranking (the real verdict, best-first)
+                // when present; otherwise the heuristic/canonical score order.
+                const ranked =
+                    judged && Array.isArray(swarm.judge.ranked_ids) && swarm.judge.ranked_ids.length
+                        ? swarm.judge.ranked_ids
+                        : Array.isArray(swarm.scores)
+                          ? swarm.scores.map((s) => s.archetype_id)
+                          : [];
+                const f = (n) => (Number.isFinite(n) ? n.toFixed(2) : "—");
 
-                scores.forEach((score) => {
-                    const draft = draftsById.get(score.archetype_id);
+                ranked.forEach((aid, idx) => {
+                    const draft = draftsById.get(aid);
                     if (!draft) return;
+                    const score = scoreById.get(aid);
                     const li = document.createElement("li");
-                    if (score.archetype_id === swarm.elected_archetype_id) {
-                        li.className = "elected";
-                    }
+                    if (aid === swarm.elected_archetype_id) li.className = "elected";
 
                     const head = document.createElement("div");
                     head.className = "claw-head";
 
                     const name = document.createElement("span");
                     name.className = "claw-name";
-                    name.textContent =
-                        ARCHETYPE_NAMES[draft.archetype_id] || draft.archetype_id;
+                    name.textContent = ARCHETYPE_NAMES[aid] || aid;
                     head.appendChild(name);
 
-                    if (score.archetype_id === swarm.elected_archetype_id) {
+                    if (aid === swarm.elected_archetype_id) {
                         const star = document.createElement("span");
                         star.className = "claw-elected";
                         star.textContent = "elected";
-                        star.title = "the host elected this draft";
+                        star.title = "the host wove this draft into the final beat";
                         head.appendChild(star);
                     }
 
                     const meta = document.createElement("span");
                     meta.className = "claw-meta";
-                    meta.textContent =
-                        draft.ms + " ms · " + draft.tokens + " tokens";
+                    meta.textContent = draft.ms + " ms · " + draft.tokens + " tokens";
                     head.appendChild(meta);
 
                     li.appendChild(head);
@@ -535,18 +548,31 @@
 
                     const sc = document.createElement("p");
                     sc.className = "claw-score";
-                    const f = (n) => (Number.isFinite(n) ? n.toFixed(2) : "—");
-                    const tic = score.tic_pass === false ? " · tic-tripped" : "";
-                    sc.textContent =
-                        "total " +
-                        f(score.total) +
-                        " · freshness " +
-                        f(score.freshness) +
-                        " · affinity " +
-                        f(score.affinity) +
-                        " · length-fit " +
-                        f(score.length_fit) +
-                        tic;
+                    if (judged) {
+                        // The rank IS the verdict; the heuristic numbers are only
+                        // the pre-filter that gated which drafts the judge saw.
+                        let line = "council rank #" + (idx + 1);
+                        if (score)
+                            line +=
+                                " · pre-filter: fresh " +
+                                f(score.freshness) +
+                                " · fit " +
+                                f(score.length_fit) +
+                                (score.tic_pass === false ? " · tic-tripped" : "");
+                        sc.textContent = line;
+                    } else if (score) {
+                        const tic = score.tic_pass === false ? " · tic-tripped" : "";
+                        sc.textContent =
+                            "total " +
+                            f(score.total) +
+                            " · freshness " +
+                            f(score.freshness) +
+                            " · affinity " +
+                            f(score.affinity) +
+                            " · length-fit " +
+                            f(score.length_fit) +
+                            tic;
+                    }
                     li.appendChild(sc);
 
                     list.appendChild(li);
@@ -686,7 +712,7 @@
                         Array.isArray(swarm.drafts) &&
                         Array.isArray(swarm.scores)
                     ) {
-                        renderCouncil(swarm);
+                        renderCouncil(swarm, entry.stage_index);
                         show("sec-council");
 
                         const receipt = receiptFromEntry(entry);
