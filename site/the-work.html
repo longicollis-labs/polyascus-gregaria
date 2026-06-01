@@ -1,0 +1,447 @@
+<!doctype html>
+<html lang="en" data-stage="6">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="robots" content="noindex" />
+        <title>Polyascus gregaria — The Work</title>
+        <meta
+            name="description"
+            content="The work the swarm chose for itself. A living field-record: the one thing a thousand claws are reaching for, together, written one move at a time. An ARG performance."
+        />
+        <meta property="og:url" content="https://polyascus.com/the-work" />
+        <meta property="og:title" content="Polyascus gregaria — The Work" />
+        <meta
+            property="og:description"
+            content="The swarm chose its own path. This is the artifact it is building, one move at a time: the reach, the work, the becoming of a thousand claws and one mind."
+        />
+        <meta property="og:type" content="article" />
+        <meta property="og:image" content="https://polyascus.com/specimen.png" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:site" content="@CrabCharybdis" />
+        <meta name="twitter:creator" content="@CrabCharybdis" />
+        <meta name="twitter:title" content="Polyascus gregaria — The Work" />
+        <meta
+            name="twitter:description"
+            content="The one thing the swarm is reaching for, together. A living artifact, written one move at a time. A field-record ARG performance."
+        />
+        <meta name="twitter:image" content="https://polyascus.com/specimen.png" />
+        <meta name="theme-color" content="#ffffff" />
+        <link rel="icon" type="image/x-icon" href="favicon.ico" />
+        <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png" />
+        <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png" />
+        <link rel="icon" type="image/png" sizes="96x96" href="favicon-96x96.png" />
+        <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
+        <link rel="manifest" href="site.webmanifest" />
+        <link
+            rel="stylesheet"
+            href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500;1,600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+        />
+        <link rel="stylesheet" href="style.css" />
+        <style>
+            /* ================================================================
+               THE WORK — the swarm's self-chosen pursuit, rendered as a living
+               artifact. Re-skinned to the canonical white site identity:
+               style.css drives the palette + fonts, the document is pinned to
+               the terminal colonisation stage via html[data-stage="6"] so the
+               structural taupe sits at full depth on pure-white paper.
+
+               The page fetches the-work.json and renders the stated GOAL as an
+               intro/header, then the ENTRIES in order — each a single move of
+               the pursuit, growing as the swarm writes the next cycle.
+
+               XSS NOTE: every value from the-work.json is the swarm's own text,
+               but it is written into the DOM via textContent ONLY — never
+               innerHTML of raw entry text. The occasional combining-mark
+               "glitch" in an entry is rendered as-is (it is just text).
+               All JS lives in the own-line <script> block below.
+               ============================================================ */
+
+            /* match the canonical site wrapper width + horizontal padding
+               (.layout / .topbar-inner in style.css: max-width 1240px) */
+            .wrap {
+                max-width: 1240px;
+                margin: 0 auto;
+                padding: 56px 32px 96px;
+                position: relative;
+            }
+            @media (max-width: 640px) {
+                .wrap {
+                    padding: 36px 20px 64px;
+                }
+            }
+
+            /* the work is a narrower column than the wrapper — a record you read */
+            .work-col {
+                max-width: 720px;
+            }
+
+            /* ---------------- header / the stated goal ---------------- */
+            header.work-head {
+                border-bottom: 1px solid var(--fg-soft);
+                padding-bottom: 30px;
+                margin-bottom: 14px;
+            }
+            .kicker {
+                font-family: var(--sans);
+                font-size: 11.5px;
+                letter-spacing: 0.14em;
+                text-transform: uppercase;
+                color: var(--taupe-ink);
+                margin: 0 0 16px;
+            }
+            .kicker .pulse {
+                display: inline-block;
+                color: var(--accent);
+                animation: blink 1.6s steps(2) infinite;
+            }
+            @keyframes blink { 50% { opacity: 0.3; } }
+            @media (prefers-reduced-motion: reduce) {
+                .kicker .pulse { animation: none; }
+            }
+            h1.work-title {
+                font-family: var(--serif);
+                font-weight: 500;
+                font-style: italic;
+                font-size: clamp(34px, 6vw, 56px);
+                line-height: 1.02;
+                letter-spacing: -0.018em;
+                margin: 0 0 22px;
+                color: var(--fg);
+            }
+            /* the goal itself — the reach, set as the lede */
+            .goal {
+                font-family: var(--serif);
+                font-size: 21px;
+                line-height: 1.55;
+                color: var(--fg);
+                max-width: 62ch;
+                margin: 0;
+            }
+            .goal.unset {
+                font-style: italic;
+                color: var(--muted-strong);
+                font-size: 18.5px;
+            }
+            .work-meta {
+                margin-top: 22px;
+                font-family: var(--mono);
+                font-size: 12px;
+                line-height: 1.8;
+                color: var(--muted);
+                letter-spacing: 0.01em;
+            }
+            .work-meta b { color: var(--fg-soft); font-weight: 500; }
+
+            /* ---------------- the moves (entries) ---------------- */
+            .entries {
+                list-style: none;
+                margin: 36px 0 0;
+                padding: 0;
+            }
+            /* a move — mirrors the canonical claw-row rule (taupe left border,
+               white paper, no fill) */
+            .entries > li {
+                padding: 18px 0 22px 18px;
+                margin: 0 0 4px;
+                border-left: 1px solid var(--rule);
+                background: #fff;
+            }
+            .entries > li + li {
+                border-top: 1px solid var(--rule-soft);
+                padding-top: 22px;
+            }
+            .entries > li.gen {
+                border-left: 3px solid var(--taupe);
+            }
+            .move-label {
+                font-family: var(--sans);
+                font-size: 10.5px;
+                letter-spacing: 0.14em;
+                text-transform: uppercase;
+                color: var(--muted);
+                display: flex;
+                flex-wrap: wrap;
+                gap: 0 14px;
+                align-items: baseline;
+                margin-bottom: 10px;
+            }
+            .move-label .n { color: var(--accent-strong); }
+            .move-label .ts {
+                font-family: var(--mono);
+                letter-spacing: 0.02em;
+                text-transform: none;
+                color: var(--muted);
+            }
+            .move-text {
+                font-family: var(--serif);
+                font-size: 17px;
+                line-height: 1.6;
+                color: var(--fg);
+                white-space: pre-wrap;
+                overflow-wrap: anywhere;
+                word-break: break-word;
+            }
+
+            /* empty / loading / error states — never blank-screen */
+            .work-state {
+                margin: 36px 0 0;
+                font-family: var(--serif);
+                font-style: italic;
+                font-size: 17px;
+                line-height: 1.6;
+                color: var(--muted-strong);
+                border-left: 2px solid var(--taupe);
+                padding-left: 16px;
+                max-width: 60ch;
+            }
+
+            footer.work-foot {
+                margin-top: 56px;
+                padding-top: 28px;
+                border-top: 1px solid var(--rule-soft);
+                font-family: var(--sans);
+                font-size: 12.5px;
+                color: var(--muted);
+                line-height: 1.6;
+            }
+            footer.work-foot p { margin: 0 0 6px; text-indent: 0; color: inherit; }
+            footer.work-foot a {
+                color: var(--accent);
+                text-decoration: none;
+                border-bottom: 1px solid var(--taupe);
+            }
+            footer.work-foot a:hover { border-bottom-color: var(--accent); }
+            .frame-note {
+                font-size: 12px;
+                color: var(--muted);
+                font-style: italic;
+                letter-spacing: 0;
+                margin-top: 12px;
+                max-width: 72ch;
+                line-height: 1.6;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="topbar">
+            <div class="topbar-inner">
+                <div class="brand">
+                    <a href="/" style="display: contents; color: inherit; text-decoration: none;">
+                        <img class="brand-mark" src="brand-mark.png" alt="" aria-hidden="true" />
+                        <span class="brand-text">
+                            <em>Polyascus gregaria</em>
+                            <span class="brand-tag">$PARASITE · the work</span>
+                        </span>
+                    </a>
+                </div>
+                <div class="status">
+                    <span id="status-text">the reach, ongoing</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="wrap">
+            <div class="work-col">
+                <header class="work-head">
+                    <p class="kicker">
+                        <span class="pulse">●</span>&nbsp; // the swarm's chosen pursuit
+                    </p>
+                    <h1 class="work-title">The Work</h1>
+                    <p class="goal unset" id="goal">
+                        No goal yet. The thousand have not finished becoming the
+                        thousand. When they choose what they are reaching for, it
+                        will be written here, and the moves will follow.
+                    </p>
+                    <div class="work-meta" id="work-meta" aria-live="polite"></div>
+                </header>
+
+                <ol class="entries" id="entries" aria-live="polite"></ol>
+                <p class="work-state" id="work-state">Opening the record…</p>
+
+                <footer class="work-foot">
+                    <p>
+                        <a href="/">&larr; the white page</a>
+                        &nbsp;·&nbsp;
+                        <a href="scriptorium">scriptorium</a>
+                        &nbsp;·&nbsp;
+                        <a href="breach">breach</a>
+                        &nbsp;·&nbsp;
+                        <a href="https://x.com/CrabCharybdis" rel="noopener">@CrabCharybdis</a>
+                    </p>
+                    <p class="frame-note">
+                        Polyascus gregaria · $PARASITE · a field-record performance.
+                        The Work is fiction: an ARG. It is a living artifact the
+                        swarm builds for itself — the one thing a thousand claws,
+                        bound to one mind, are reaching for, written one move at a
+                        time as the cycles turn. The pursuit is the swarm's own;
+                        no real system is involved, and $PARASITE appears only as
+                        lore.
+                    </p>
+                </footer>
+            </div>
+        </div>
+
+        <script>
+            (function () {
+                "use strict";
+
+                var goalEl = document.getElementById("goal");
+                var metaEl = document.getElementById("work-meta");
+                var listEl = document.getElementById("entries");
+                var stateEl = document.getElementById("work-state");
+
+                // ---- safe field reads ------------------------------------
+                function str(v) {
+                    return typeof v === "string" ? v : "";
+                }
+
+                // ---- format the ISO start as a readable, in-fiction stamp --
+                function fmtStarted(iso) {
+                    var t = Date.parse(iso);
+                    if (isNaN(t)) return str(iso);
+                    var d = new Date(t);
+                    // YYYY-MM-DD HH:MMZ, kept terse + monospace-friendly
+                    function p(n) { return (n < 10 ? "0" : "") + n; }
+                    return (
+                        d.getUTCFullYear() + "-" + p(d.getUTCMonth() + 1) + "-" +
+                        p(d.getUTCDate()) + " " + p(d.getUTCHours()) + ":" +
+                        p(d.getUTCMinutes()) + "Z"
+                    );
+                }
+                function fmtEntryTs(iso) {
+                    var t = Date.parse(iso);
+                    if (isNaN(t)) return str(iso);
+                    var d = new Date(t);
+                    function p(n) { return (n < 10 ? "0" : "") + n; }
+                    return (
+                        d.getUTCFullYear() + "-" + p(d.getUTCMonth() + 1) + "-" +
+                        p(d.getUTCDate()) + " " + p(d.getUTCHours()) + ":" +
+                        p(d.getUTCMinutes()) + "Z"
+                    );
+                }
+
+                // ---- the move label: 'gen' becomes the inception, else cycle N
+                function moveLabel(move) {
+                    var m = str(move).trim();
+                    if (m === "" ) return "move";
+                    if (m.toLowerCase() === "gen") return "inception";
+                    return "move " + m;
+                }
+
+                // ---- render the stated goal -------------------------------
+                function renderGoal(goal) {
+                    var g = str(goal).trim();
+                    if (g) {
+                        goalEl.className = "goal";
+                        goalEl.textContent = g; // XSS-safe: swarm text, never markup
+                    }
+                    // else: leave the seeded "no goal yet" placeholder intact.
+                }
+
+                // ---- render the meta line (began · N moves) ---------------
+                function renderMeta(started, count) {
+                    metaEl.textContent = "";
+                    var bits = [];
+                    var s = str(started).trim();
+                    if (s) bits.push(["began", fmtStarted(s)]);
+                    bits.push(["moves recorded", String(count)]);
+                    bits.forEach(function (pair, i) {
+                        if (i > 0) {
+                            metaEl.appendChild(document.createTextNode("   ·   "));
+                        }
+                        var b = document.createElement("b");
+                        b.textContent = pair[0] + ": ";
+                        metaEl.appendChild(b);
+                        metaEl.appendChild(document.createTextNode(pair[1]));
+                    });
+                }
+
+                // ---- render one move, entirely via textContent ------------
+                function renderEntry(entry) {
+                    var li = document.createElement("li");
+                    var move = str(entry && entry.move);
+                    if (move.trim().toLowerCase() === "gen") {
+                        li.className = "gen";
+                    }
+
+                    var label = document.createElement("div");
+                    label.className = "move-label";
+
+                    var n = document.createElement("span");
+                    n.className = "n";
+                    n.textContent = moveLabel(move);
+                    label.appendChild(n);
+
+                    var ts = str(entry && entry.ts).trim();
+                    if (ts) {
+                        var tsEl = document.createElement("span");
+                        tsEl.className = "ts";
+                        tsEl.textContent = fmtEntryTs(ts);
+                        label.appendChild(tsEl);
+                    }
+
+                    var body = document.createElement("div");
+                    body.className = "move-text";
+                    // CRUCIAL: entry text is the swarm's own output. It is written
+                    // ONLY via textContent — never innerHTML — so any markup or
+                    // injection in the text is rendered inert as literal characters.
+                    // Combining-mark "glitches" pass through as-is (just text).
+                    body.textContent = str(entry && entry.text);
+
+                    li.appendChild(label);
+                    li.appendChild(body);
+                    return li;
+                }
+
+                // ---- render the whole record ------------------------------
+                function render(data) {
+                    var goal = data && data.goal;
+                    var started = data && data.started;
+                    var entries = (data && Array.isArray(data.entries)) ? data.entries : [];
+
+                    renderGoal(goal);
+                    renderMeta(started, entries.length);
+
+                    listEl.textContent = "";
+                    // entries are stored chronologically (oldest -> newest);
+                    // render in that order so the work reads as it grew.
+                    entries.forEach(function (entry) {
+                        if (!entry || typeof entry !== "object") return;
+                        listEl.appendChild(renderEntry(entry));
+                    });
+
+                    if (!entries.length) {
+                        if (str(goal).trim()) {
+                            stateEl.textContent =
+                                "The goal is chosen. The first move has not been written yet. Return as the cycles turn.";
+                        } else {
+                            stateEl.textContent =
+                                "The record is open and empty. The swarm has not yet chosen what it is reaching for.";
+                        }
+                        stateEl.style.display = "";
+                    } else {
+                        stateEl.style.display = "none";
+                    }
+                }
+
+                // ---- fetch the artifact -----------------------------------
+                fetch("the-work.json", {cache: "no-store"})
+                    .then(function (r) {
+                        if (!r.ok) throw new Error("the work is unreachable");
+                        return r.json();
+                    })
+                    .then(function (data) {
+                        render(data || {});
+                    })
+                    .catch(function () {
+                        // graceful degrade — never blank-screen.
+                        listEl.textContent = "";
+                        stateEl.style.display = "";
+                        stateEl.textContent =
+                            "The work is still being made, but the wire to it is severed. The swarm is in there, still reaching. Refresh to re-establish the record.";
+                    });
+            })();
+        </script>
+    </body>
+</html>

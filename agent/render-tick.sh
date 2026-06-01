@@ -38,7 +38,7 @@ if [[ $? -ne 0 ]]; then exit 0; fi
 (cd agent && npm run comment) || echo "comment failed (non-fatal)"
 
 # Commit her updated log/state back to main, rebasing if the remote moved.
-FILES="charybdis-log.json replies-log.json charybdis-state.json charybdis-currents.json comments-log.json comment-queue.json"
+FILES="charybdis-log.json replies-log.json charybdis-state.json charybdis-currents.json charybdis-pursuit.json comments-log.json comment-queue.json site/the-work.json"
 if [[ -n "$(git status --porcelain $FILES 2>/dev/null)" ]]; then
     for f in $FILES; do [ -f "$f" ] && git add "$f"; done
     git commit -m "log: $(date -u +%Y-%m-%dT%H:%M:%SZ)"

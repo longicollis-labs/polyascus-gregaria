@@ -13,6 +13,7 @@ import {judgeElect, keepBetter} from "./swarm/judge.js";
 import {swarmSizeForStage} from "./swarm/scale.js";
 import {maybeGlitch} from "./glitch.js";
 import {host} from "./swarm/host.js";
+import {loadPursuit, savePursuit, renderPursuit, generatePursuitGoal, advancePursuit, appendWorkEntry} from "./pursuit.js";
 
 // Most recent market cap recorded in the log, for the brood-motion signal.
 function lastMcap(log: LogEntry[]): number | null {
@@ -102,7 +103,20 @@ async function main(): Promise<void> {
     }
 
     const inner = loadInnerState();
-    const innerRendered = renderInner(inner);
+    let innerRendered = renderInner(inner);
+
+    // If pursuit state exists, feed the goal into the prompt so posts WANT it.
+    // Folded into innerRendered (the inner-context block passed to both the
+    // claw-swarm and the single-LLM decide()), so it nudges both branches without
+    // disturbing the swarm/decide branch logic. Null on first run (no state yet);
+    // the goal is generated AFTER this cycle's post in the non-blocking block below.
+    {
+        const pursuit = loadPursuit();
+        if (pursuit) {
+            innerRendered +=
+                "\n\n--- your pursuit (what you are reaching for, together) ---\n" + renderPursuit(pursuit);
+        }
+    }
 
     // Stridulation T-005: when SWARM_ENABLED=1, route the post through the
     // claw-swarm (N claws → deliberate → host curator). Default OFF — the live
@@ -214,6 +228,37 @@ async function main(): Promise<void> {
         },
         swarm: swarmMeta,
     });
+
+    // --- The swarm's self-chosen pursuit --------------------------------------
+    // On first run (no pursuit state), generate the goal in-fiction. Each cycle,
+    // append an entry to site/the-work.json and evolve the pursuit one step. The
+    // whole block mirrors the evolveInnerState try/catch (below): it runs AFTER the
+    // post is logged, so it has decision.post_text, and a throw here logs but does
+    // NOT re-throw — the post is already out. All file writes (savePursuit,
+    // appendWorkEntry) are guarded by !DRY_RUN; in DRY_RUN nothing is persisted.
+    if (!DRY_RUN) {
+        try {
+            let pursuit = loadPursuit();
+            // First run: the swarm chooses its goal.
+            if (!pursuit) {
+                pursuit = await generatePursuitGoal(input.stage);
+                savePursuit(pursuit);
+                console.log("pursuit goal generated");
+            }
+            // Append this cycle's entry to the public artifact (guards inside).
+            const entryText = decision.post_text || "";
+            if (entryText.trim()) {
+                appendWorkEntry(new Date().toISOString(), pursuit.moves, entryText);
+            }
+            // Evolve the pursuit one bounded step from this entry, then persist.
+            const evolved = await advancePursuit(pursuit, entryText, input.stage);
+            savePursuit(evolved);
+            console.log("pursuit evolved");
+        } catch (e) {
+            console.error("pursuit failed:", (e as Error)?.message || e);
+            // Non-blocking: do not re-throw; the post is already logged.
+        }
+    }
 
     // Self-evolution: nudge her inner state one bounded step from this cycle.
     if (!DRY_RUN) {
