@@ -52,6 +52,16 @@ export type LogEntry = {
             length_fit: number;
             tic_pass: boolean;
         }[];
+        // The quality selection: how the judge panel ranked the drafts (best-first
+        // archetype_ids). `scores` above is only the heuristic pre-filter; this is
+        // the chooser the scriptorium shows. "fallback" method = no judge (≤1
+        // survivor or no API key) and ranked_ids is just the elected.
+        judge?: {
+            method: string;
+            model: string;
+            panel: number;
+            ranked_ids: string[];
+        };
         host: {
             ms: number;
             tokens: number;

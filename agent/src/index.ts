@@ -10,6 +10,7 @@ import {loadCurrents, saveCurrents, evolveCurrents} from "./currents.js";
 import {ARCHETYPES} from "./swarm/archetypes.js";
 import {claw} from "./swarm/claw.js";
 import {judgeElect, keepBetter} from "./swarm/judge.js";
+import {swarmSizeForStage} from "./swarm/scale.js";
 import {host} from "./swarm/host.js";
 
 // Most recent market cap recorded in the log, for the brood-motion signal.
@@ -113,13 +114,23 @@ async function main(): Promise<void> {
     // the per-post claws + elected + host metadata. Stays undefined on the
     // single-LLM path, and JSON.stringify drops undefined keys → additive.
     let swarmMeta: LogEntry["swarm"] = undefined;
-    if (process.env.SWARM_ENABLED === "1") {
-        const n = Math.max(1, Math.min(parseInt(process.env.SWARM_N ?? "3", 10) || 3, ARCHETYPES.length));
+    // The swarm GROWS with the colonisation (scale.ts): one voice at intrusion,
+    // the full council by merger — the medium enacting the one-becomes-many arc.
+    // SWARM_N overrides the stage curve (testing). n < 2 means she is still one
+    // crab: the single-LLM voice, no council. Default OFF until the operator flips.
+    const swarmN =
+        process.env.SWARM_ENABLED === "1"
+            ? process.env.SWARM_N
+                ? Math.max(1, Math.min(parseInt(process.env.SWARM_N, 10) || 1, ARCHETYPES.length))
+                : swarmSizeForStage(curStageIdx)
+            : 0;
+    if (swarmN >= 2) {
+        const n = swarmN;
         const archetypes = ARCHETYPES.slice(0, n);
         const drafts = await Promise.all(archetypes.map((a) => claw(a, input, innerRendered)));
         // #1 quality selection: heuristic pre-filter → stronger-model judge panel.
         // #3 top-K runners-up handed to the host to synthesise across.
-        const {elected, runnersUp, scores} = await judgeElect(drafts, {recent_posts: input.recent_posts, stage: input.stage});
+        const {elected, runnersUp, scores, meta} = await judgeElect(drafts, {recent_posts: input.recent_posts, stage: input.stage});
         const hostResult = await host({input, inner: innerRendered, elected, dissent: runnersUp});
         // #4 anti-blandify: ship the host polish only if it beats the elected raw draft.
         const {text, kept} = await keepBetter(hostResult.decision.post_text ?? "", elected.decision.post_text ?? "", input.stage);
@@ -134,6 +145,10 @@ async function main(): Promise<void> {
                 tokens: d.tokens,
             })),
             scores,
+            // The real deliberation: how the judge panel ranked the drafts — the
+            // scriptorium shows this as the council's verdict (the `scores` above
+            // are only the heuristic pre-filter, not the chooser).
+            judge: {method: meta.method, model: meta.model, panel: meta.panel, ranked_ids: meta.ranked_ids},
             host: {
                 ms: hostResult.ms,
                 tokens: hostResult.tokens,
@@ -145,10 +160,12 @@ async function main(): Promise<void> {
             fed_at_post: inf?.fed_sol,
         };
         console.log(
-            `swarm: N=${n} elected=${elected.archetype_id} kept=${kept} host_tripped=[${hostResult.tripped.join(",")}] ` +
-                `ms=${hostResult.ms} tokens=${hostResult.tokens}`,
+            `swarm: stage=${input.stage} N=${n} elected=${elected.archetype_id} kept=${kept} ` +
+                `host_tripped=[${hostResult.tripped.join(",")}] ms=${hostResult.ms} tokens=${hostResult.tokens}`,
         );
     } else {
+        if (process.env.SWARM_ENABLED === "1")
+            console.log(`swarm: ${input.stage} → one voice (she is still one crab)`);
         decision = await decide(input, innerRendered);
     }
     console.log("decision:", decision);
