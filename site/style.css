@@ -308,7 +308,7 @@ nav.toc a:hover {
 nav.toc a.active {
     color: var(--taupe-ink);
     border-left-color: var(--taupe);
-    background: var(--taupe-tint);
+    background: var(--bg);
 }
 
 nav.toc a.active .n {
@@ -1330,7 +1330,7 @@ ol.footnotes li {
 }
 
 ol.footnotes li:target {
-    background: var(--accent-soft);
+    background: var(--bg);
     padding: 6px 10px;
     margin-left: -10px;
     border-radius: 3px;
